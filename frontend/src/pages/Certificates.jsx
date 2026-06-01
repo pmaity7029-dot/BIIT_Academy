@@ -1,112 +1,972 @@
-import { Button, Card, DatePicker, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
+import {
+  Button,
+  Card,
+  DatePicker,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  message
+} from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { FiAward, FiPlus, FiPrinter, FiSearch, FiTrash2 } from 'react-icons/fi';
+import {
+  FiAward,
+  FiEdit3,
+  FiPlus,
+  FiPrinter,
+  FiSave,
+  FiSearch,
+  FiTrash2
+} from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
-import { printExactElement } from '../utils/printElement.js';
 import React from 'react';
 
-const CERTIFICATE_PAGE_STYLES = `
-  @page { size: A4 landscape; margin: 0; }
+const defaultModules = [
+  { no: '1.', title: 'Computer fundamental, Basic Hardware, Operating system', fullMarks: '150', marksObtain: '92' },
+  { no: '2.', title: 'MS Office (Word, Excel, PowerPoint)', fullMarks: '100', marksObtain: '70' },
+  { no: '3.', title: 'Internet and E-mail', fullMarks: '50', marksObtain: '30' },
+  { no: '4.', title: 'Project work and Practical', fullMarks: '200', marksObtain: '150' }
+];
 
-  html,
-  body.biit-print-body {
-    width: 297mm;
-    min-height: 210mm;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fffdf7 !important;
+const makeDummyCertificate = () => ({
+  certificateNo: 'Auto Generate',
+  student: '',
+  studentName: 'NISHA KAR',
+  fatherName: 'Father Name',
+  gender: 'Female',
+  regNo: 'BIIT0120265902',
+  birthDateText: '01 February 1996',
+  courseTitle: 'Computer Application',
+  duration: '6 Months / 120 hrs',
+  grade: 'A+',
+  percentage: '68',
+  totalFullMarks: '500',
+  totalMarksObtain: '342',
+  moduleRows: defaultModules,
+  issueDate: dayjs(),
+  issueDateText: dayjs().format('DD/MM/YY'),
+  instituteName: 'Bengal Institute of IT & Technology',
+  officeAddress: 'H.O. & Reg. Office : Midnapore, West Bengal',
+  website: 'www.biit.in'
+});
+
+const getRelation = (gender) => {
+  if (gender === 'Male') return 'Son';
+  if (gender === 'Female') return 'Daughter';
+  return 'Student';
+};
+
+const getCertificateData = (certificate) => {
+  const student = certificate?.student;
+
+  if (!certificate) return makeDummyCertificate();
+
+  return {
+    _id: certificate._id,
+    certificateNo: certificate.certificateNo || 'Auto Generate',
+    student: student?._id || certificate.student || '',
+    studentName: certificate.studentName || student?.name || 'Student Name',
+    fatherName: certificate.fatherName || student?.fatherName || 'Father Name',
+    gender: certificate.gender || student?.gender || 'Female',
+    regNo: certificate.regNo || student?.regNo || 'BIIT0120265902',
+    birthDateText:
+      certificate.birthDateText ||
+      (student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : '01 February 1996'),
+    courseTitle: certificate.courseTitle || 'Computer Application',
+    duration: certificate.duration || certificate.remarks || '6 Months / 120 hrs',
+    grade: certificate.grade || 'A+',
+    percentage: certificate.percentage || '68',
+    totalFullMarks: certificate.totalFullMarks || '500',
+    totalMarksObtain: certificate.totalMarksObtain || '342',
+    moduleRows: certificate.moduleRows?.length ? certificate.moduleRows : defaultModules,
+    issueDate: certificate.issueDate ? dayjs(certificate.issueDate) : dayjs(),
+    issueDateText:
+      certificate.issueDateText ||
+      (certificate.issueDate ? dayjs(certificate.issueDate).format('DD/MM/YY') : dayjs().format('DD/MM/YY')),
+    instituteName: certificate.instituteName || 'Bengal Institute of IT & Technology',
+    officeAddress: certificate.officeAddress || 'H.O. & Reg. Office : Midnapore, West Bengal',
+    website: certificate.website || 'www.biit.in'
+  };
+};
+
+const CERTIFICATE_STYLES = `
+  .classic-certificate-wrap {
+    width: 100%;
+    overflow-x: auto;
+    padding: 14px 0;
+  }
+
+  .classic-certificate {
+    position: relative;
+    width: 1122px;
+    height: 794px;
+    margin: 0 auto;
     overflow: hidden;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    border: 1px solid #79571a;
+    color: #050505;
+    background:
+      radial-gradient(circle at 52% 48%, #fff9e8 0%, #fff2c7 32%, #f5d56f 63%, #d7a342 100%);
+    font-family: Georgia, "Times New Roman", serif;
+    box-shadow: 0 24px 70px rgba(80, 45, 0, 0.22);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  body.biit-print-body {
-    display: grid !important;
-    place-items: center !important;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif !important;
+  .classic-certificate,
+  .classic-certificate * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .biit-print-stage {
-    width: 297mm;
-    height: 210mm;
+  .classic-bg-text {
+    position: absolute;
+    top: -36px;
+    left: 130px;
+    right: -40px;
+    height: 280px;
+    z-index: 1;
+    transform: rotate(-12deg);
+    opacity: 0.22;
+    color: #9b711d;
+    font-size: 19px;
+    line-height: 1.16;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .classic-bg-text span {
+    margin-right: 18px;
+  }
+
+  .classic-right-text {
+    position: absolute;
+    top: -10px;
+    right: -15px;
+    bottom: 0;
+    width: 300px;
+    z-index: 1;
+    transform: rotate(-18deg);
+    opacity: 0.22;
+    color: #9b711d;
+    font-size: 18px;
+    line-height: 1.14;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .classic-left-curve {
+    position: absolute;
+    left: -135px;
+    top: -15px;
+    z-index: 2;
+    width: 370px;
+    height: 900px;
+    border-radius: 0 55% 55% 0;
+    background:
+      linear-gradient(113deg, #9f741f 0%, #bb8e30 49%, rgba(255, 226, 132, 0.3) 50%, rgba(255,255,255,0) 59%);
+    box-shadow: 22px 0 0 rgba(141, 101, 20, 0.17);
+    transform: rotate(7deg);
+    pointer-events: none;
+  }
+
+  .classic-layer {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    height: 100%;
+    padding: 22px 30px 0;
+  }
+
+  .classic-logo {
+    position: absolute;
+    left: 28px;
+    top: 78px;
+    z-index: 25;
+    width: 150px;
+    height: 150px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.86);
+    background:
+      radial-gradient(circle at center, #ffffff 0 34%, #3d74a5 35% 54%, #f7f7f7 55% 67%, #b12d24 68% 100%);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.26);
+    color: #11375f;
+    font-family: Arial, sans-serif;
+    font-size: 25px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-logo small {
+    display: block;
+    margin-top: 4px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #2c6b98;
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .classic-top {
+    padding-left: 150px;
+    text-align: center;
+  }
+
+  .classic-institute {
+    margin: 0;
+    color: #ffffff;
+    font-size: 45px;
+    line-height: 1;
+    font-variant: small-caps;
+    letter-spacing: 1.5px;
+    text-shadow: 2px 3px 4px rgba(0,0,0,0.58);
+  }
+
+  .classic-subtitle {
+    margin: 8px 0 0;
+    color: #1a1a1a;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .classic-foundation {
+    margin: 4px 0 0;
+    color: #9f2727;
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    line-height: 1.1;
+    font-weight: 800;
+  }
+
+  .classic-ribbon {
+    position: relative;
+    width: 590px;
+    height: 62px;
+    margin: 8px auto 4px;
+    display: grid;
+    place-items: center;
+    border: 3px solid #b98d2e;
+    border-radius: 18px;
+    background:
+      linear-gradient(90deg, #76110f 0%, #cd4130 18%, #6e0c0b 50%, #d54d36 82%, #70100e 100%);
+    color: #ffffff;
+    font-size: 38px;
+    font-style: italic;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 2px 3px 3px rgba(0,0,0,0.62);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.36);
+  }
+
+  .classic-reg-row {
+    display: flex;
+    justify-content: center;
+    gap: 130px;
+    color: #1b2b70;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .classic-body {
+    position: relative;
+    z-index: 22;
+    margin-top: 48px;
+    padding-left: 90px;
+    padding-right: 34px;
+  }
+
+  .classic-main-text {
+    margin: 0 0 14px;
+    color: #000;
+    font-size: 18px;
+    line-height: 1.35;
+    font-weight: 800;
+    text-align: left;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.55);
+  }
+
+  .classic-highlight {
+    display: inline;
+    padding: 0 4px;
+    background: #fff200;
+    color: #000;
+    font-weight: 900;
+  }
+
+  .classic-content-row {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 28px;
+    align-items: end;
+    margin-top: 10px;
+  }
+
+  .classic-accreditation-title {
+    margin-bottom: 6px;
+    color: #c91d1d;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .classic-accreditation-grid {
+    display: grid;
+    grid-template-columns: 115px 150px;
+    gap: 8px 12px;
+    align-items: center;
+  }
+
+  .classic-mini-logo {
+    width: 112px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    border: 1px solid rgba(50, 50, 50, 0.65);
+    background: rgba(255,255,255,0.74);
+    color: #18416d;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-mini-logo.red {
+    color: #a51f1f;
+  }
+
+  .classic-signatures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 18px;
+    padding-right: 10px;
+    color: #111;
+    font-size: 16px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-signatures span {
+    border-top: 1px solid rgba(0,0,0,0.25);
+    padding-top: 5px;
+  }
+
+  .classic-module-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.84);
+    color: #000;
+    font-size: 14px;
+    line-height: 1.05;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  .classic-module-table th,
+  .classic-module-table td {
+    border: 1px solid #000;
+    padding: 5px 7px;
+    vertical-align: middle;
+  }
+
+  .classic-module-table th {
+    background: rgba(255,255,255,0.93);
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-module-table td:first-child {
+    width: 28px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-module-table td:nth-child(3),
+  .classic-module-table td:nth-child(4) {
+    width: 72px;
+    text-align: center;
+  }
+
+  .classic-total-row td {
+    background: rgba(255,255,255,0.95);
+    font-size: 16px;
+    font-weight: 900;
+  }
+
+  .classic-issue {
+    margin-top: 22px;
+    color: #111;
+    font-size: 16px;
+    font-weight: 900;
+    text-align: center;
+  }
+
+  .classic-footer-strip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 34px;
+    z-index: 30;
+    height: 40px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 4mm;
-    background: #fffdf7;
+    justify-content: space-between;
+    padding: 0 30px;
+    background: #a9791f;
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
   }
 
-  .biit-print-stage .certificate-print {
-    width: 289mm !important;
-    height: 202mm !important;
-    min-height: 0 !important;
-    max-width: none !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  .classic-grade-note {
+    position: absolute;
+    left: 58px;
+    right: 290px;
+    bottom: 8px;
+    z-index: 30;
+    color: #df1f1f;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
   }
 
-  .biit-print-stage .certificate-print,
-  .biit-print-stage .certificate-print * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  .classic-verify-note {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    z-index: 30;
+    color: #4a3a1b;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .editable-cert-field {
+    min-width: 22px;
+    display: inline-block;
+    border-radius: 4px;
+    outline: 2px dashed rgba(20, 63, 117, 0.55);
+    outline-offset: 2px;
+    cursor: text;
+  }
+
+  .editable-cert-field:focus {
+    background: #fff6a3;
+    outline: 2px solid #143f75;
+  }
+
+  .certificate-editor-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 18px;
+  }
+
+  .certificate-editor-form {
+    max-height: 76vh;
+    overflow: auto;
+    padding-right: 6px;
+  }
+
+  .editor-field-label {
+    display: block;
+    margin: 12px 0 5px;
+    color: #53647d;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .editor-hint {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px dashed #d4af37;
+    border-radius: 12px;
+    background: #fffbea;
+    color: #6b560f;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .module-editor-row {
+    display: grid;
+    grid-template-columns: 46px 1fr 70px 70px 36px;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 1200px) {
+    .classic-certificate {
+      transform: scale(0.84);
+      transform-origin: top left;
+      margin-bottom: -115px;
+    }
+
+    .classic-certificate-wrap {
+      height: 690px;
+    }
+
+    .certificate-editor-grid {
+      grid-template-columns: 1fr;
+    }
   }
 `;
 
-const gradeOptions = ['A+', 'A', 'B+', 'B', 'C'].map((value) => ({ value }));
+const printStyles = `
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 297mm;
+    height: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-stage {
+    width: 297mm;
+    height: 210mm;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+  }
+
+  .classic-certificate-wrap {
+    width: 297mm !important;
+    height: 210mm !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .classic-certificate {
+    width: 297mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .editable-cert-field {
+    outline: 0 !important;
+  }
+`;
+
+const bgText = Array.from({ length: 56 }, (_, index) => (
+  <span key={index}>Bengal Institute of Information Technology</span>
+));
+
+function EditableField({ value, editable, className = '', onChange }) {
+  if (!editable) {
+    return <span className={className}>{value}</span>;
+  }
+
+  return (
+    <span
+      className={`editable-cert-field ${className}`}
+      contentEditable
+      suppressContentEditableWarning
+      onBlur={(event) => onChange(event.currentTarget.textContent)}
+    >
+      {value}
+    </span>
+  );
+}
+
+const ClassicCertificate = React.forwardRef(function ClassicCertificate(
+  { data, editable = false, onEditField, onEditModule },
+  ref
+) {
+  const edit = (field) => (value) => onEditField?.(field, value);
+
+  return (
+    <div ref={ref} className="classic-certificate">
+      <div className="classic-bg-text">{bgText}</div>
+      <div className="classic-right-text">{bgText}</div>
+      <div className="classic-left-curve" />
+
+      <div className="classic-layer">
+        <div className="classic-logo">
+          BIIT
+          <small>SINCE 2008</small>
+        </div>
+
+        <div className="classic-top">
+          <h1 className="classic-institute">
+            <EditableField value={data.instituteName} editable={editable} onChange={edit('instituteName')} />
+          </h1>
+
+          <div className="classic-subtitle">
+            Reg. Under Ministry of Human Resource Development (MHRD), Govt. of India
+          </div>
+
+          <div className="classic-foundation">
+            A Unit of Bengal Institute Educational Foundation
+            <span> (An autonomous Institute) </span>
+          </div>
+
+          <div className="classic-foundation">ISO : 9001 : 2008 Certified</div>
+
+          <div className="classic-ribbon">Certificate of Completion</div>
+
+          <div className="classic-reg-row">
+            <span>
+              Reg. no.{' '}
+              <EditableField value={data.regNo} editable={editable} onChange={edit('regNo')} />
+            </span>
+            <span>Certificate. no. {data.certificateNo}</span>
+          </div>
+        </div>
+
+        <div className="classic-body">
+          <p className="classic-main-text">
+            This certificate is awarded to{' '}
+            <EditableField
+              value={data.studentName}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('studentName')}
+            />
+            , {getRelation(data.gender)} of{' '}
+            <EditableField
+              value={data.fatherName}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('fatherName')}
+            />
+            , date of birth{' '}
+            <EditableField
+              value={data.birthDateText}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('birthDateText')}
+            />
+            , on completion of{' '}
+            <EditableField
+              value={data.courseTitle}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('courseTitle')}
+            />{' '}
+            duration of{' '}
+            <EditableField
+              value={data.duration}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('duration')}
+            />{' '}
+            with grade{' '}
+            <EditableField
+              value={data.grade}
+              editable={editable}
+              className="classic-highlight"
+              onChange={edit('grade')}
+            />
+            .
+          </p>
+
+          <div className="classic-content-row">
+            <div>
+              <div className="classic-accreditation-title">Training Institute</div>
+
+              <div className="classic-accreditation-grid">
+                <div className="classic-mini-logo red">BIIT - KALAGACHIA</div>
+                <div className="classic-mini-logo">Planning Commission<br />Govt. of India</div>
+                <div className="classic-mini-logo red">EDUCATION &amp;<br />TRAINING</div>
+                <div className="classic-mini-logo">N.S.D.C<br />Skill Development</div>
+              </div>
+
+              <div className="classic-signatures">
+                <span>Register</span>
+                <span>Chairman</span>
+                <span>LTP Director</span>
+              </div>
+            </div>
+
+            <div>
+              <table className="classic-module-table">
+                <thead>
+                  <tr>
+                    <th colSpan="2">Module Details</th>
+                    <th>Full<br />Marks</th>
+                    <th>Marks<br />Obtain</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.moduleRows.map((row, index) => (
+                    <tr key={`${row.no}-${index}`}>
+                      <td>
+                        <EditableField
+                          value={row.no}
+                          editable={editable}
+                          onChange={(value) => onEditModule?.(index, 'no', value)}
+                        />
+                      </td>
+                      <td>
+                        <EditableField
+                          value={row.title}
+                          editable={editable}
+                          onChange={(value) => onEditModule?.(index, 'title', value)}
+                        />
+                      </td>
+                      <td>
+                        <EditableField
+                          value={row.fullMarks}
+                          editable={editable}
+                          onChange={(value) => onEditModule?.(index, 'fullMarks', value)}
+                        />
+                      </td>
+                      <td>
+                        <EditableField
+                          value={row.marksObtain}
+                          editable={editable}
+                          onChange={(value) => onEditModule?.(index, 'marksObtain', value)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+
+                  <tr className="classic-total-row">
+                    <td colSpan="2">
+                      Percentage :{' '}
+                      <EditableField
+                        value={data.percentage}
+                        editable={editable}
+                        onChange={edit('percentage')}
+                      />{' '}
+                      % &nbsp;&nbsp; Grade :{' '}
+                      <EditableField
+                        value={data.grade}
+                        editable={editable}
+                        onChange={edit('grade')}
+                      />
+                    </td>
+                    <td>
+                      Total{' '}
+                      <EditableField
+                        value={data.totalFullMarks}
+                        editable={editable}
+                        onChange={edit('totalFullMarks')}
+                      />
+                    </td>
+                    <td>
+                      <EditableField
+                        value={data.totalMarksObtain}
+                        editable={editable}
+                        onChange={edit('totalMarksObtain')}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="classic-issue">
+                <EditableField
+                  value={data.issueDateText}
+                  editable={editable}
+                  onChange={edit('issueDateText')}
+                />
+                <br />
+                Date of Issue
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="classic-footer-strip">
+        <span>
+          <EditableField
+            value={data.officeAddress}
+            editable={editable}
+            onChange={edit('officeAddress')}
+          />
+        </span>
+        <span>
+          <EditableField value={data.website} editable={editable} onChange={edit('website')} />
+        </span>
+      </div>
+
+      <div className="classic-grade-note">
+        Grade: A+ (90% &amp; above), A (70%-89%), B+ (60%-69%), B (50%-59%), C (40%-49%)
+      </div>
+
+      <div className="classic-verify-note">
+        To verify this certificate please visit our office.
+      </div>
+    </div>
+  );
+});
 
 export default function Certificates() {
   const [certificates, setCertificates] = useState([]);
   const [students, setStudents] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [open, setOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editor, setEditor] = useState(makeDummyCertificate());
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
+
   const certRef = useRef(null);
+  const editorCertRef = useRef(null);
 
   const load = async (searchValue = search) => {
     setLoading(true);
+
     try {
-      const [certRes, studentRes] = await Promise.all([
-        api.get('/certificates', { params: { search: searchValue } }),
+      const [certificateRes, studentRes] = await Promise.all([
+        api.get('/certificates', { params: searchValue ? { search: searchValue } : {} }),
         api.get('/students')
       ]);
-      setCertificates(certRes.data);
+
+      setCertificates(certificateRes.data);
       setStudents(studentRes.data);
 
-      if (!selected && certRes.data[0]) {
-        setSelected(certRes.data[0]);
+      if (!selected && certificateRes.data[0]) {
+        setSelected(certificateRes.data[0]);
       }
+
+      return certificateRes.data;
+    } catch (error) {
+      message.error('Certificate data loading failed');
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load().catch(() => message.error('Certificate data loading failed'));
+    load('');
   }, []);
 
-  const save = async () => {
+  const updateEditor = (field, value) => {
+    setEditor((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateModule = (index, field, value) => {
+    setEditor((prev) => ({
+      ...prev,
+      moduleRows: prev.moduleRows.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, [field]: value } : row
+      )
+    }));
+  };
+
+  const addModuleRow = () => {
+    setEditor((prev) => ({
+      ...prev,
+      moduleRows: [
+        ...prev.moduleRows,
+        {
+          no: `${prev.moduleRows.length + 1}.`,
+          title: 'New Module',
+          fullMarks: '100',
+          marksObtain: '80'
+        }
+      ]
+    }));
+  };
+
+  const removeModuleRow = (index) => {
+    setEditor((prev) => ({
+      ...prev,
+      moduleRows: prev.moduleRows.filter((_, rowIndex) => rowIndex !== index)
+    }));
+  };
+
+  const openNewEditor = () => {
+    setEditingId(null);
+    setEditor(makeDummyCertificate());
+    setEditorOpen(true);
+  };
+
+  const openEditorFromCertificate = (certificate) => {
+    setEditingId(certificate._id);
+    setEditor(getCertificateData(certificate));
+    setEditorOpen(true);
+  };
+
+  const selectStudentForEditor = (studentId) => {
+    const student = students.find((item) => item._id === studentId);
+
+    setEditor((prev) => ({
+      ...prev,
+      student: studentId || '',
+      studentName: student?.name || prev.studentName,
+      fatherName: student?.fatherName || prev.fatherName,
+      gender: student?.gender || prev.gender,
+      regNo: student?.regNo || prev.regNo,
+      birthDateText: student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : prev.birthDateText
+    }));
+  };
+
+  const buildPayload = () => {
+    const payload = {
+      ...editor,
+      issueDate: editor.issueDate?.toISOString
+        ? editor.issueDate.toISOString()
+        : dayjs().toISOString(),
+      remarks: editor.duration,
+      moduleRows: editor.moduleRows.map((row) => ({
+        no: row.no || '',
+        title: row.title || '',
+        fullMarks: row.fullMarks || '',
+        marksObtain: row.marksObtain || ''
+      }))
+    };
+
+    delete payload._id;
+    delete payload.certificateNo;
+
+    if (!payload.student) {
+      delete payload.student;
+    }
+
+    return payload;
+  };
+
+  const saveCertificate = async () => {
+    if (!editor.studentName?.trim()) {
+      message.error('Student name is required');
+      return;
+    }
+
+    if (!editor.courseTitle?.trim()) {
+      message.error('Course title is required');
+      return;
+    }
+
     try {
-      const values = await form.validateFields();
-      const { data } = await api.post('/certificates', {
-        ...values,
-        issueDate: values.issueDate?.toISOString()
-      });
-      message.success('Certificate generated');
+      const payload = buildPayload();
+
+      const { data } = editingId
+        ? await api.put(`/certificates/${editingId}`, payload)
+        : await api.post('/certificates', payload);
+
+      message.success(editingId ? 'Certificate updated' : 'Certificate generated');
+
       setSelected(data);
-      setOpen(false);
-      form.resetFields();
-      load('');
+      setEditorOpen(false);
       setSearch('');
+      await load('');
     } catch (error) {
-      if (!error.errorFields) message.error('Certificate save failed');
+      message.error(error?.response?.data?.message || 'Certificate save failed');
     }
   };
 
@@ -114,44 +974,102 @@ export default function Certificates() {
     try {
       await api.delete(`/certificates/${certificate._id}`);
       message.success('Certificate deleted');
-      if (selected?._id === certificate._id) setSelected(null);
-      load();
+
+      if (selected?._id === certificate._id) {
+        setSelected(null);
+      }
+
+      await load(search);
     } catch (error) {
       message.error(error?.response?.data?.message || 'Certificate delete failed');
     }
   };
 
-  const printCertificate = () => {
-    printExactElement({
-      element: certRef.current,
-      title: `BIIT Certificate - ${selected?.certificateNo || 'Preview'}`,
-      pageStyles: CERTIFICATE_PAGE_STYLES,
-      windowSize: 'width=1280,height=900'
-    });
+  const printCertificate = (targetRef = certRef) => {
+    if (!targetRef.current) return;
+
+    const printWindow = window.open('', '_blank', 'width=1280,height=900');
+
+    if (!printWindow) {
+      message.error('Popup blocked. Please allow popup for printing.');
+      return;
+    }
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>BIIT Certificate</title>
+          <style>${CERTIFICATE_STYLES}</style>
+          <style>${printStyles}</style>
+        </head>
+        <body>
+          <div class="print-stage">
+            <div class="classic-certificate-wrap">
+              ${targetRef.current.outerHTML}
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   };
 
   const columns = [
     { title: 'Certificate No.', dataIndex: 'certificateNo', width: 180 },
     {
       title: 'Student',
-      render: (_, row) => (
-        <div>
-          <strong>{row.student?.name}</strong><br />
-          <span className="muted-text">{row.student?.regNo}</span>
-        </div>
-      )
+      render: (_, row) => {
+        const data = getCertificateData(row);
+
+        return (
+          <div>
+            <strong>{data.studentName}</strong>
+            <br />
+            <span className="muted-text">{data.regNo}</span>
+          </div>
+        );
+      }
     },
     { title: 'Course', dataIndex: 'courseTitle' },
-    { title: 'Grade', dataIndex: 'grade', width: 90, render: (grade) => <Tag color="gold">{grade}</Tag> },
-    { title: 'Issue Date', dataIndex: 'issueDate', width: 150, render: (date) => dayjs(date).format('DD MMM YYYY') },
+    {
+      title: 'Grade',
+      dataIndex: 'grade',
+      width: 90,
+      render: (grade) => <Tag color="gold">{grade}</Tag>
+    },
+    {
+      title: 'Issue Date',
+      dataIndex: 'issueDate',
+      width: 150,
+      render: (date) => dayjs(date).format('DD MMM YYYY')
+    },
     {
       title: 'Action',
       fixed: 'right',
-      width: 190,
+      width: 250,
       render: (_, row) => (
         <Space>
-          <Button icon={<FiPrinter />} onClick={() => setSelected(row)}>Preview</Button>
-          <Popconfirm title="Delete this certificate?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteCertificate(row)}>
+          <Button icon={<FiAward />} onClick={() => setSelected(row)}>
+            Preview
+          </Button>
+
+          <Button icon={<FiEdit3 />} onClick={() => openEditorFromCertificate(row)}>
+            Edit
+          </Button>
+
+          <Popconfirm
+            title="Delete this certificate?"
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => deleteCertificate(row)}
+          >
             <Button danger icon={<FiTrash2 />} />
           </Popconfirm>
         </Space>
@@ -159,50 +1077,43 @@ export default function Certificates() {
     }
   ];
 
+  const selectedData = selected ? getCertificateData(selected) : null;
+
   return (
     <div>
+      <style>{CERTIFICATE_STYLES}</style>
+
       <PageHeader
         icon={<FiAward />}
         title="Certificates"
-        subtitle="Generate premium course completion certificates"
+        subtitle="Generate, click, edit, print, and save classic BIIT certificates"
         actionText="Generate Certificate"
         actionIcon={<FiPlus />}
-        onAction={() => setOpen(true)}
+        onAction={openNewEditor}
       />
 
-      {selected && (
+      {selectedData && (
         <Card className="content-card" bordered={false}>
           <div className="section-toolbar">
-            <strong>Certificate Preview — {selected.certificateNo}</strong>
-            <Button type="primary" icon={<FiPrinter />} onClick={printCertificate}>Print / Save PDF</Button>
+            <strong>Certificate Preview — {selectedData.certificateNo}</strong>
+
+            <Space wrap>
+              <Button icon={<FiEdit3 />} onClick={() => openEditorFromCertificate(selected)}>
+                Edit This Certificate
+              </Button>
+
+              <Button type="primary" icon={<FiPrinter />} onClick={() => printCertificate(certRef)}>
+                Print / Save PDF
+              </Button>
+            </Space>
           </div>
-          <div ref={certRef} className="certificate-print premium-certificate">
-            <div className="cert-watermark">BIIT</div>
-            <div className="cert-corner cert-corner-tl" />
-            <div className="cert-corner cert-corner-tr" />
-            <div className="cert-corner cert-corner-bl" />
-            <div className="cert-corner cert-corner-br" />
-            <div className="cert-kicker">Bengal Institute of Information Technology</div>
-            <h1 className="cert-title">Certificate of Completion</h1>
-            <p className="cert-text">This certificate is proudly presented to</p>
-            <div className="cert-name">{selected.student?.name}</div>
-            <div className="cert-line" />
-            <p className="cert-text">for successful completion of</p>
-            <h2 className="cert-course">{selected.courseTitle}</h2>
-            <p className="cert-text">with grade <strong>{selected.grade}</strong></p>
-            <p className="cert-meta">Issued on {dayjs(selected.issueDate).format('DD MMM YYYY')}</p>
-            <p className="cert-meta">Certificate No: {selected.certificateNo}</p>
-            <div className="cert-footer">
-              <div className="cert-sign-block">
-                <span>BIIT Main Branch</span>
-                <small>Issuing Centre</small>
-              </div>
-              <div className="cert-seal">BIIT</div>
-              <div className="cert-sign-block right">
-                <span>Authorized Signature</span>
-                <small>{selected.issuedBy?.name || 'Super Admin'}</small>
-              </div>
-            </div>
+
+          <div
+            className="classic-certificate-wrap"
+            title="Double click certificate to edit"
+            onDoubleClick={() => openEditorFromCertificate(selected)}
+          >
+            <ClassicCertificate ref={certRef} data={selectedData} />
           </div>
         </Card>
       )}
@@ -216,25 +1127,169 @@ export default function Certificates() {
               placeholder="Search certificate, student, reg no, course..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              onSearch={(value) => load(value)}
-              style={{ width: 360 }}
+              onSearch={(value) => {
+                setSearch(value);
+                load(value);
+              }}
+              style={{ width: 340 }}
             />
-            <Button onClick={() => { setSearch(''); load(''); }}>Reset</Button>
+
+            <Button
+              onClick={() => {
+                setSearch('');
+                load('');
+              }}
+            >
+              Reset
+            </Button>
           </Space>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={certificates} loading={loading} scroll={{ x: 1100 }} />
+
+        <Table
+          rowKey="_id"
+          columns={columns}
+          dataSource={certificates}
+          loading={loading}
+          scroll={{ x: 1200 }}
+          onRow={(record) => ({
+            onClick: () => setSelected(record),
+            onDoubleClick: () => openEditorFromCertificate(record)
+          })}
+        />
       </Card>
 
-      <Modal title="Generate Certificate" open={open} onCancel={() => setOpen(false)} onOk={save} okText="Generate">
-        <Form form={form} layout="vertical" initialValues={{ grade: 'A+', issueDate: dayjs() }}>
-          <Form.Item name="student" label="Student" rules={[{ required: true }]}> 
-            <Select showSearch optionFilterProp="label" options={students.map((student) => ({ value: student._id, label: `${student.name} - ${student.regNo}` }))} />
-          </Form.Item>
-          <Form.Item name="courseTitle" label="Course Title" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="grade" label="Grade"><Select options={gradeOptions} /></Form.Item>
-          <Form.Item name="issueDate" label="Issue Date"><DatePicker className="full-width" /></Form.Item>
-          <Form.Item name="remarks" label="Remarks"><Input.TextArea rows={3} /></Form.Item>
-        </Form>
+      <Modal
+        title={editingId ? 'Edit Certificate Like Document' : 'Generate Dummy Certificate'}
+        open={editorOpen}
+        onCancel={() => setEditorOpen(false)}
+        width="96vw"
+        style={{ top: 18 }}
+        footer={[
+          <Button key="cancel" onClick={() => setEditorOpen(false)}>
+            Cancel
+          </Button>,
+          <Button key="print" icon={<FiPrinter />} onClick={() => printCertificate(editorCertRef)}>
+            Print Preview
+          </Button>,
+          <Button key="save" type="primary" icon={<FiSave />} onClick={saveCertificate}>
+            {editingId ? 'Update Certificate' : 'Save Certificate'}
+          </Button>
+        ]}
+        destroyOnClose
+      >
+        <div className="certificate-editor-grid">
+          <div className="certificate-editor-form">
+            <div className="editor-hint">
+              Left side fields se edit karo, ya right side certificate ke yellow/dashed text par click karke directly type karo.
+            </div>
+
+            <label className="editor-field-label">Select Existing Student Optional</label>
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Optional: select student"
+              value={editor.student || undefined}
+              onChange={(value) => selectStudentForEditor(value || '')}
+              options={students.map((student) => ({
+                value: student._id,
+                label: `${student.name} - ${student.regNo}`
+              }))}
+              style={{ width: '100%' }}
+            />
+
+            <label className="editor-field-label">Student Name</label>
+            <Input value={editor.studentName} onChange={(event) => updateEditor('studentName', event.target.value)} />
+
+            <label className="editor-field-label">Father Name</label>
+            <Input value={editor.fatherName} onChange={(event) => updateEditor('fatherName', event.target.value)} />
+
+            <label className="editor-field-label">Gender</label>
+            <Select
+              value={editor.gender}
+              onChange={(value) => updateEditor('gender', value)}
+              options={[{ value: 'Male' }, { value: 'Female' }, { value: 'Other' }]}
+              style={{ width: '100%' }}
+            />
+
+            <label className="editor-field-label">Reg No</label>
+            <Input value={editor.regNo} onChange={(event) => updateEditor('regNo', event.target.value)} />
+
+            <label className="editor-field-label">Date of Birth Text</label>
+            <Input value={editor.birthDateText} onChange={(event) => updateEditor('birthDateText', event.target.value)} />
+
+            <label className="editor-field-label">Course Title</label>
+            <Input value={editor.courseTitle} onChange={(event) => updateEditor('courseTitle', event.target.value)} />
+
+            <label className="editor-field-label">Duration / Hours</label>
+            <Input value={editor.duration} onChange={(event) => updateEditor('duration', event.target.value)} />
+
+            <label className="editor-field-label">Grade</label>
+            <Select
+              value={editor.grade}
+              onChange={(value) => updateEditor('grade', value)}
+              options={[{ value: 'A+' }, { value: 'A' }, { value: 'B+' }, { value: 'B' }, { value: 'C' }]}
+              style={{ width: '100%' }}
+            />
+
+            <label className="editor-field-label">Issue Date</label>
+            <DatePicker
+              className="full-width"
+              value={editor.issueDate}
+              format="DD MMM YYYY"
+              onChange={(value) => {
+                updateEditor('issueDate', value || dayjs());
+                updateEditor('issueDateText', (value || dayjs()).format('DD/MM/YY'));
+              }}
+            />
+
+            <label className="editor-field-label">Issue Date Text</label>
+            <Input value={editor.issueDateText} onChange={(event) => updateEditor('issueDateText', event.target.value)} />
+
+            <label className="editor-field-label">Percentage</label>
+            <Input value={editor.percentage} onChange={(event) => updateEditor('percentage', event.target.value)} />
+
+            <label className="editor-field-label">Total Full Marks</label>
+            <Input value={editor.totalFullMarks} onChange={(event) => updateEditor('totalFullMarks', event.target.value)} />
+
+            <label className="editor-field-label">Total Marks Obtain</label>
+            <Input value={editor.totalMarksObtain} onChange={(event) => updateEditor('totalMarksObtain', event.target.value)} />
+
+            <label className="editor-field-label">Institute Name</label>
+            <Input value={editor.instituteName} onChange={(event) => updateEditor('instituteName', event.target.value)} />
+
+            <label className="editor-field-label">Office Address</label>
+            <Input value={editor.officeAddress} onChange={(event) => updateEditor('officeAddress', event.target.value)} />
+
+            <label className="editor-field-label">Website</label>
+            <Input value={editor.website} onChange={(event) => updateEditor('website', event.target.value)} />
+
+            <label className="editor-field-label">Module Details</label>
+            {editor.moduleRows.map((row, index) => (
+              <div className="module-editor-row" key={`${row.no}-${index}`}>
+                <Input value={row.no} onChange={(event) => updateModule(index, 'no', event.target.value)} />
+                <Input value={row.title} onChange={(event) => updateModule(index, 'title', event.target.value)} />
+                <Input value={row.fullMarks} onChange={(event) => updateModule(index, 'fullMarks', event.target.value)} />
+                <Input value={row.marksObtain} onChange={(event) => updateModule(index, 'marksObtain', event.target.value)} />
+                <Button danger icon={<FiTrash2 />} onClick={() => removeModuleRow(index)} />
+              </div>
+            ))}
+
+            <Button block onClick={addModuleRow}>
+              Add Module Row
+            </Button>
+          </div>
+
+          <div className="classic-certificate-wrap">
+            <ClassicCertificate
+              ref={editorCertRef}
+              data={editor}
+              editable
+              onEditField={updateEditor}
+              onEditModule={updateModule}
+            />
+          </div>
+        </div>
       </Modal>
     </div>
   );
