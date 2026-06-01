@@ -25,9 +25,25 @@ import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
 import React from 'react';
+import logo from "../images/logo.png";
+import nsdc from "../images/nsdc.jpeg";
+import pcms from "../images/pcms.png";
+import aim from "../images/aim.jpg";
+import add from "../images/add.png";
+
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+
+const CERTIFICATE_ASSETS = {
+  mainLogo: logo, // Line 30
+  training: add,
+  planning: pcms,
+  education: aim,
+  nsdc: nsdc
+};
 
 const defaultModules = [
-  { no: '1.', title: 'Computer fundamental, Basic Hardware, Operating system', fullMarks: '150', marksObtain: '92' },
+  { no: '1.', title: 'Computer fundamental, Basic Hardware, Operating system and hardware', fullMarks: '150', marksObtain: '97' },
   { no: '2.', title: 'MS Office (Word, Excel, PowerPoint)', fullMarks: '100', marksObtain: '70' },
   { no: '3.', title: 'Internet and E-mail', fullMarks: '50', marksObtain: '30' },
   { no: '4.', title: 'Project work and Practical', fullMarks: '200', marksObtain: '150' }
@@ -36,14 +52,14 @@ const defaultModules = [
 const makeDummyCertificate = () => ({
   certificateNo: 'Auto Generate',
   student: '',
-  studentName: 'NISHA KAR',
-  fatherName: 'Father Name',
-  gender: 'Female',
+  studentName: 'BISWAJIT HAZRA',
+  fatherName: 'Manik Hazra',
+  gender: 'Male',
   regNo: 'BIIT0120265902',
-  birthDateText: '01 February 1996',
-  courseTitle: 'Computer Application',
+  birthDateText: '03 April 2004',
+  courseTitle: 'Frontend Web Development',
   duration: '6 Months / 120 hrs',
-  grade: 'A+',
+  grade: 'A',
   percentage: '68',
   totalFullMarks: '500',
   totalMarksObtain: '342',
@@ -52,7 +68,7 @@ const makeDummyCertificate = () => ({
   issueDateText: dayjs().format('DD/MM/YY'),
   instituteName: 'Bengal Institute of IT & Technology',
   officeAddress: 'H.O. & Reg. Office : Midnapore, West Bengal',
-  website: 'www.biit.in'
+  website: 'www.biitedu.in'
 });
 
 const getRelation = (gender) => {
@@ -72,14 +88,14 @@ const getCertificateData = (certificate) => {
     student: student?._id || certificate.student || '',
     studentName: certificate.studentName || student?.name || 'Student Name',
     fatherName: certificate.fatherName || student?.fatherName || 'Father Name',
-    gender: certificate.gender || student?.gender || 'Female',
+    gender: certificate.gender || student?.gender || 'Male',
     regNo: certificate.regNo || student?.regNo || 'BIIT0120265902',
     birthDateText:
       certificate.birthDateText ||
-      (student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : '01 February 1996'),
-    courseTitle: certificate.courseTitle || 'Computer Application',
+      (student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : '03 April 2004'),
+    courseTitle: certificate.courseTitle || 'Frontend Web Development',
     duration: certificate.duration || certificate.remarks || '6 Months / 120 hrs',
-    grade: certificate.grade || 'A+',
+    grade: certificate.grade || 'A',
     percentage: certificate.percentage || '68',
     totalFullMarks: certificate.totalFullMarks || '500',
     totalMarksObtain: certificate.totalMarksObtain || '342',
@@ -107,10 +123,10 @@ const CERTIFICATE_STYLES = `
     height: 794px;
     margin: 0 auto;
     overflow: hidden;
-    border: 1px solid #79571a;
+    border: 2px solid #7d5a1d;
     color: #050505;
     background:
-      radial-gradient(circle at 52% 48%, #fff9e8 0%, #fff2c7 32%, #f5d56f 63%, #d7a342 100%);
+      radial-gradient(circle at 51% 48%, rgba(255, 253, 237, 0.98) 0%, rgba(255, 246, 202, 0.98) 38%, rgba(237, 204, 102, 0.96) 68%, #c89231 100%);
     font-family: Georgia, "Times New Roman", serif;
     box-shadow: 0 24px 70px rgba(80, 45, 0, 0.22);
     -webkit-print-color-adjust: exact;
@@ -124,54 +140,71 @@ const CERTIFICATE_STYLES = `
     print-color-adjust: exact;
   }
 
-  .classic-bg-text {
+  /* Single clean tiled watermark layer. Removed the second/right watermark layer
+     because it was overlapping and becoming dark in print/PDF. */
+  .classic-bg-pattern {
     position: absolute;
-    top: -36px;
-    left: 130px;
-    right: -40px;
-    height: 280px;
+    top: -150px;
+    left: 112px;
     z-index: 1;
-    transform: rotate(-12deg);
-    opacity: 0.22;
-    color: #9b711d;
-    font-size: 19px;
-    line-height: 1.16;
+    width: 1120px;
+    height: 1040px;
+    display: grid;
+    grid-template-columns: repeat(3, 360px);
+    grid-auto-rows: 27px;
+    column-gap: 16px;
+    row-gap: 0;
+    overflow: hidden;
+    transform: rotate(-13deg);
+    transform-origin: center;
+    opacity: 0.16;
+    color: #9b741e;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    line-height: 1;
     font-weight: 700;
+    white-space: nowrap;
     pointer-events: none;
   }
 
-  .classic-bg-text span {
-    margin-right: 18px;
-  }
-
-  .classic-right-text {
-    position: absolute;
-    top: -10px;
-    right: -15px;
-    bottom: 0;
-    width: 300px;
-    z-index: 1;
-    transform: rotate(-18deg);
-    opacity: 0.22;
-    color: #9b711d;
-    font-size: 18px;
-    line-height: 1.14;
-    font-weight: 700;
-    pointer-events: none;
+  .classic-bg-pattern span {
+    display: block;
   }
 
   .classic-left-curve {
     position: absolute;
-    left: -135px;
-    top: -15px;
+    left: -168px;
+    top: -74px;
     z-index: 2;
-    width: 370px;
-    height: 900px;
-    border-radius: 0 55% 55% 0;
+    width: 420px;
+    height: 950px;
+    border-radius: 0 58% 58% 0;
     background:
-      linear-gradient(113deg, #9f741f 0%, #bb8e30 49%, rgba(255, 226, 132, 0.3) 50%, rgba(255,255,255,0) 59%);
-    box-shadow: 22px 0 0 rgba(141, 101, 20, 0.17);
+      linear-gradient(105deg, #8a651f 0%, #a87a23 43%, #c59636 55%, rgba(255, 229, 150, 0.42) 61%, rgba(255,255,255,0) 72%);
+    box-shadow: 24px 0 0 rgba(140, 102, 24, 0.18);
     transform: rotate(7deg);
+    pointer-events: none;
+  }
+
+  .classic-left-curve::after {
+    content: '';
+    position: absolute;
+    right: 56px;
+    top: 0;
+    width: 28px;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(255, 223, 128, 0.28);
+  }
+
+  .classic-logo-watermark {
+    position: absolute;
+    z-index: 3;
+    left: 438px;
+    top: 278px;
+    width: 255px;
+    opacity: 0.035;
+    filter: grayscale(10%);
     pointer-events: none;
   }
 
@@ -180,53 +213,39 @@ const CERTIFICATE_STYLES = `
     z-index: 20;
     width: 100%;
     height: 100%;
-    padding: 22px 30px 0;
+    padding: 24px 30px 0;
   }
 
   .classic-logo {
     position: absolute;
-    left: 28px;
-    top: 78px;
+    left: 22px;
+    top: 82px;
     z-index: 25;
-    width: 150px;
-    height: 150px;
+    width: 175px;
+    height: 166px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    border: 4px solid rgba(255,255,255,0.86);
-    background:
-      radial-gradient(circle at center, #ffffff 0 34%, #3d74a5 35% 54%, #f7f7f7 55% 67%, #b12d24 68% 100%);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.26);
-    color: #11375f;
-    font-family: Arial, sans-serif;
-    font-size: 25px;
-    font-weight: 900;
-    text-align: center;
   }
 
-  .classic-logo small {
-    display: block;
-    margin-top: 4px;
-    padding: 2px 9px;
-    border-radius: 999px;
-    background: #2c6b98;
-    color: #fff;
-    font-size: 10px;
-    letter-spacing: 0.08em;
+  .classic-logo img {
+    width: 178px;
+    height: 158px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.28));
   }
 
   .classic-top {
-    padding-left: 150px;
+    padding-left: 170px;
     text-align: center;
   }
 
   .classic-institute {
     margin: 0;
     color: #ffffff;
-    font-size: 45px;
-    line-height: 1;
+    font-size: 43px;
+    line-height: 0.98;
     font-variant: small-caps;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.3px;
     text-shadow: 2px 3px 4px rgba(0,0,0,0.58);
   }
 
@@ -235,42 +254,43 @@ const CERTIFICATE_STYLES = `
     color: #1a1a1a;
     font-family: Arial, sans-serif;
     font-size: 20px;
-    line-height: 1.1;
+    line-height: 1.08;
+    font-weight: 500;
   }
 
   .classic-foundation {
     margin: 4px 0 0;
     color: #9f2727;
     font-family: Arial, sans-serif;
-    font-size: 20px;
-    line-height: 1.1;
+    font-size: 21px;
+    line-height: 1.08;
     font-weight: 800;
   }
 
   .classic-ribbon {
     position: relative;
-    width: 590px;
-    height: 62px;
-    margin: 8px auto 4px;
+    width: 600px;
+    height: 58px;
+    margin: 9px auto 5px;
     display: grid;
     place-items: center;
     border: 3px solid #b98d2e;
-    border-radius: 18px;
+    border-radius: 16px;
     background:
-      linear-gradient(90deg, #76110f 0%, #cd4130 18%, #6e0c0b 50%, #d54d36 82%, #70100e 100%);
+      linear-gradient(90deg, #71110d 0%, #ad251d 20%, #6b0c08 50%, #d74832 82%, #70100e 100%);
     color: #ffffff;
-    font-size: 38px;
+    font-size: 37px;
     font-style: italic;
     font-weight: 900;
     line-height: 1;
-    text-shadow: 2px 3px 3px rgba(0,0,0,0.62);
+    text-shadow: 2px 3px 3px rgba(0,0,0,0.64);
     box-shadow: 0 5px 10px rgba(0,0,0,0.36);
   }
 
   .classic-reg-row {
     display: flex;
     justify-content: center;
-    gap: 130px;
+    gap: 118px;
     color: #1b2b70;
     font-size: 16px;
     font-weight: 800;
@@ -279,16 +299,16 @@ const CERTIFICATE_STYLES = `
   .classic-body {
     position: relative;
     z-index: 22;
-    margin-top: 48px;
-    padding-left: 90px;
-    padding-right: 34px;
+    margin-top: 50px;
+    padding-left: 86px;
+    padding-right: 28px;
   }
 
   .classic-main-text {
-    margin: 0 0 14px;
+    margin: 0 0 13px;
     color: #000;
     font-size: 18px;
-    line-height: 1.35;
+    line-height: 1.36;
     font-weight: 800;
     text-align: left;
     text-shadow: 0 1px 0 rgba(255,255,255,0.55);
@@ -304,51 +324,87 @@ const CERTIFICATE_STYLES = `
 
   .classic-content-row {
     display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 28px;
+    grid-template-columns: 390px 1fr;
+    gap: 100px;
     align-items: end;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
-  .classic-accreditation-title {
-    margin-bottom: 6px;
+  .classic-accreditation-panel {
+    width: 282px;
+    margin-left: 0;
+  }
+
+  .classic-accreditation-title,
+  .classic-accreditation-label,
+  .classic-initiative-label,
+  .classic-partner-label {
     color: #c91d1d;
     font-size: 12px;
     font-weight: 900;
+    line-height: 1;
+  }
+
+  .classic-accreditation-label,
+  .classic-initiative-label,
+  .classic-partner-label {
+    color: #111;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 7px 0 2px;
+  }
+
+  .classic-partner-label {
+    font-size: 15px;
+    margin-top: 1px;
+  }
+
+  .classic-training-img {
+    width: 142px;
+    height: 48px;
+    object-fit: contain;
+    display: block;
   }
 
   .classic-accreditation-grid {
     display: grid;
-    grid-template-columns: 115px 150px;
-    gap: 8px 12px;
+    grid-template-columns: 122px 158px;
+    gap: 7px 10px;
     align-items: center;
   }
 
-  .classic-mini-logo {
-    width: 112px;
-    height: 54px;
-    display: grid;
-    place-items: center;
-    padding: 4px;
-    border: 1px solid rgba(50, 50, 50, 0.65);
-    background: rgba(255,255,255,0.74);
-    color: #18416d;
-    font-family: Arial, sans-serif;
-    font-size: 10px;
-    font-weight: 900;
-    text-align: center;
+  .classic-cert-img-box {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: 1px solid rgba(70, 55, 28, 0.65);
+    background: rgba(255, 255, 255, 0.78);
   }
 
-  .classic-mini-logo.red {
-    color: #a51f1f;
+  .classic-cert-img-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .classic-cert-img-box.tall {
+    height: 58px;
+  }
+
+  .classic-cert-img-box.nsdc {
+    height: 58px;
+    width: 158px;
   }
 
   .classic-signatures {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    margin-top: 18px;
-    padding-right: 10px;
+    margin-top: 30px;
+    padding-right: 4px;
     color: #111;
     font-size: 16px;
     font-weight: 900;
@@ -363,7 +419,7 @@ const CERTIFICATE_STYLES = `
   .classic-module-table {
     width: 100%;
     border-collapse: collapse;
-    background: rgba(255,255,255,0.84);
+    background: rgba(255,255,255,0.86);
     color: #000;
     font-size: 14px;
     line-height: 1.05;
@@ -378,7 +434,7 @@ const CERTIFICATE_STYLES = `
   }
 
   .classic-module-table th {
-    background: rgba(255,255,255,0.93);
+    background: rgba(255,255,255,0.95);
     font-weight: 900;
     text-align: center;
   }
@@ -391,12 +447,12 @@ const CERTIFICATE_STYLES = `
 
   .classic-module-table td:nth-child(3),
   .classic-module-table td:nth-child(4) {
-    width: 72px;
+    width: 74px;
     text-align: center;
   }
 
   .classic-total-row td {
-    background: rgba(255,255,255,0.95);
+    background: rgba(255,255,255,0.96);
     font-size: 16px;
     font-weight: 900;
   }
@@ -437,6 +493,7 @@ const CERTIFICATE_STYLES = `
     font-family: Arial, sans-serif;
     font-size: 13px;
     font-weight: 800;
+    background: rgba(255, 255, 225, 0.72);
   }
 
   .classic-verify-note {
@@ -567,9 +624,10 @@ const printStyles = `
   }
 `;
 
-const bgText = Array.from({ length: 56 }, (_, index) => (
-  <span key={index}>Bengal Institute of Information Technology</span>
-));
+const renderBgText = (prefix) =>
+  Array.from({ length: 126 }, (_, index) => (
+    <span key={`${prefix}-${index}`}>Bengal Institute of IT &amp; Technology</span>
+  ));
 
 function EditableField({ value, editable, className = '', onChange }) {
   if (!editable) {
@@ -596,14 +654,13 @@ const ClassicCertificate = React.forwardRef(function ClassicCertificate(
 
   return (
     <div ref={ref} className="classic-certificate">
-      <div className="classic-bg-text">{bgText}</div>
-      <div className="classic-right-text">{bgText}</div>
+      <div className="classic-bg-pattern">{renderBgText('main')}</div>
       <div className="classic-left-curve" />
+      <img src={CERTIFICATE_ASSETS.mainLogo} alt="BIIT watermark" className="classic-logo-watermark" />
 
       <div className="classic-layer">
         <div className="classic-logo">
-          BIIT
-          <small>SINCE 2008</small>
+          <img src={CERTIFICATE_ASSETS.mainLogo} alt="BIIT logo" />
         </div>
 
         <div className="classic-top">
@@ -682,13 +739,31 @@ const ClassicCertificate = React.forwardRef(function ClassicCertificate(
 
           <div className="classic-content-row">
             <div>
-              <div className="classic-accreditation-title">Training Institute</div>
+              <div className="classic-accreditation-panel">
+                <div className="classic-accreditation-title">Training Institute</div>
+                <img src={CERTIFICATE_ASSETS.training} alt="BIIT Kalagachia" className="classic-training-img" />
 
-              <div className="classic-accreditation-grid">
-                <div className="classic-mini-logo red">BIIT - KALAGACHIA</div>
-                <div className="classic-mini-logo">Planning Commission<br />Govt. of India</div>
-                <div className="classic-mini-logo red">EDUCATION &amp;<br />TRAINING</div>
-                <div className="classic-mini-logo">N.S.D.C<br />Skill Development</div>
+                <div className="classic-accreditation-label">Accreditation of</div>
+                <div className="classic-accreditation-grid">
+                  <div className="classic-cert-img-box tall">
+                    <img src={CERTIFICATE_ASSETS.planning} alt="Planning Commission Government of India" />
+                  </div>
+                  <div />
+
+                  <div>
+                    <div className="classic-initiative-label">An Initiative of</div>
+                    <div className="classic-cert-img-box tall">
+                      <img src={CERTIFICATE_ASSETS.education} alt="Education and Training" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="classic-partner-label">In partnership with</div>
+                    <div className="classic-cert-img-box nsdc">
+                      <img src={CERTIFICATE_ASSETS.nsdc} alt="NSDC Skill Development" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="classic-signatures">
@@ -765,6 +840,7 @@ const ClassicCertificate = React.forwardRef(function ClassicCertificate(
                       />
                     </td>
                     <td>
+                      Obtained{' '}
                       <EditableField
                         value={data.totalMarksObtain}
                         editable={editable}
@@ -985,41 +1061,113 @@ export default function Certificates() {
     }
   };
 
-  const printCertificate = (targetRef = certRef) => {
-    if (!targetRef.current) return;
+const printCertificate = async (targetRef = certRef) => {
+  if (!targetRef.current) return;
 
-    const printWindow = window.open('', '_blank', 'width=1280,height=900');
+  const exportWrapper = document.createElement('div');
 
-    if (!printWindow) {
-      message.error('Popup blocked. Please allow popup for printing.');
-      return;
-    }
+  exportWrapper.style.cssText = `
+    position: fixed;
+    left: -100000px;
+    top: 0;
+    width: 1122px;
+    height: 794px;
+    background: #ffffff;
+    overflow: hidden;
+    z-index: -9999;
+    opacity: 1;
+    pointer-events: none;
+  `;
 
-    printWindow.document.write(`
-      <!doctype html>
-      <html>
-        <head>
-          <title>BIIT Certificate</title>
-          <style>${CERTIFICATE_STYLES}</style>
-          <style>${printStyles}</style>
-        </head>
-        <body>
-          <div class="print-stage">
-            <div class="classic-certificate-wrap">
-              ${targetRef.current.outerHTML}
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
+  exportWrapper.innerHTML = `
+    <style>
+      ${CERTIFICATE_STYLES}
 
-    printWindow.document.close();
-    printWindow.focus();
+      .classic-certificate-wrap {
+        width: 1122px !important;
+        height: 794px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+      }
 
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
-  };
+      .classic-certificate {
+        width: 1122px !important;
+        height: 794px !important;
+        margin: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+
+      .editable-cert-field {
+        outline: 0 !important;
+      }
+    </style>
+
+    <div class="classic-certificate-wrap">
+      ${targetRef.current.outerHTML}
+    </div>
+  `;
+
+  document.body.appendChild(exportWrapper);
+
+  try {
+    const certificateNode = exportWrapper.querySelector('.classic-certificate');
+
+    const images = Array.from(exportWrapper.querySelectorAll('img'));
+
+    await Promise.all(
+      images.map((img) => {
+        if (img.complete) return Promise.resolve();
+
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const canvas = await html2canvas(certificateNode, {
+      scale: 2.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: 1122,
+      height: 794,
+      windowWidth: 1400,
+      windowHeight: 900,
+      scrollX: 0,
+      scrollY: 0
+    });
+
+    const imageData = canvas.toDataURL('image/jpeg', 1.0);
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    pdf.addImage(imageData, 'JPEG', 0, 0, 297, 210);
+
+    const studentName =
+      certificateNode.querySelector('.classic-highlight')?.textContent?.trim() || 'Student';
+
+    const safeName = studentName.replace(/[^a-z0-9]/gi, '_');
+
+    pdf.save(`BIIT_Certificate_${safeName}.pdf`);
+  } catch (error) {
+    console.error(error);
+    message.error('PDF generate failed. Please try again.');
+  } finally {
+    document.body.removeChild(exportWrapper);
+  }
+};
 
   const columns = [
     { title: 'Certificate No.', dataIndex: 'certificateNo', width: 180 },
@@ -1179,9 +1327,7 @@ export default function Certificates() {
       >
         <div className="certificate-editor-grid">
           <div className="certificate-editor-form">
-            <div className="editor-hint">
-              Left side fields se edit karo, ya right side certificate ke yellow/dashed text par click karke directly type karo.
-            </div>
+            
 
             <label className="editor-field-label">Select Existing Student Optional</label>
             <Select
