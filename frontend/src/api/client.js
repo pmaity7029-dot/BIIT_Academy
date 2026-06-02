@@ -43,7 +43,8 @@ api.interceptors.response.use(
     const shouldTryFallback =
       originalRequest &&
       !originalRequest.__fallbackCompleted &&
-      (!error?.response || error?.response?.status === 404);
+      !error?.response &&
+      error?.code !== 'ERR_CANCELED';
 
     if (shouldTryFallback) {
       originalRequest.__fallbackCompleted = true;
@@ -59,11 +60,11 @@ api.interceptors.response.use(
             baseURL
           });
         } catch (fallbackError) {
-          if (fallbackError?.response && fallbackError.response.status !== 404) {
-            return Promise.reject(fallbackError);
-          }
-
           error = fallbackError;
+
+          if (fallbackError?.response) {
+            break;
+          }
         }
       }
     }

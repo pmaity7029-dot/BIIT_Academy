@@ -15,18 +15,29 @@ const attendanceColor = (status) => {
   return 'blue';
 };
 
+const cleanParams = (params) => {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+  );
+};
+
 export default function Attendance() {
   const [date, setDate] = useState(dayjs());
+  const [sheetBatch, setSheetBatch] = useState('');
   const [sheet, setSheet] = useState([]);
   const [history, setHistory] = useState([]);
   const [students, setStudents] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
+
   const [historyFilters, setHistoryFilters] = useState({
     date: dayjs(),
     month: null,
     student: '',
     status: '',
+    batch: '',
     search: ''
   });
+
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -35,16 +46,31 @@ export default function Attendance() {
     setStudents(data);
   };
 
-  const loadSheet = async () => {
+  const loadBatches = async () => {
+    try {
+      const { data } = await api.get('/students/batches/list');
+      setBatchOptions(data || []);
+    } catch (error) {
+      setBatchOptions([]);
+    }
+  };
+
+  const loadSheet = async (nextBatch = sheetBatch) => {
     try {
       setLoading(true);
-      const { data } = await api.get(`/attendance/sheet/${date.format('YYYY-MM-DD')}`);
-      setSheet(data.map((row) => ({
-        key: row.student._id,
-        student: row.student,
-        status: row.attendance?.status || 'Present',
-        notes: row.attendance?.notes || ''
-      })));
+
+      const { data } = await api.get(`/attendance/sheet/${date.format('YYYY-MM-DD')}`, {
+        params: cleanParams({ batch: nextBatch })
+      });
+
+      setSheet(
+        data.map((row) => ({
+          key: row.student._id,
+          student: row.student,
+          status: row.attendance?.status || 'Present',
+          notes: row.attendance?.notes || ''
+        }))
+      );
     } catch (error) {
       message.error('Attendance sheet loading failed');
     } finally {
@@ -54,6 +80,7 @@ export default function Attendance() {
 
   const loadHistory = async (nextFilters = historyFilters) => {
     setHistoryLoading(true);
+
     try {
       const params = {};
 
@@ -65,9 +92,10 @@ export default function Attendance() {
 
       if (nextFilters.student) params.student = nextFilters.student;
       if (nextFilters.status) params.status = nextFilters.status;
+      if (nextFilters.batch) params.batch = nextFilters.batch;
       if (nextFilters.search) params.search = nextFilters.search;
 
-      const { data } = await api.get('/attendance', { params });
+      const { data } = await api.get('/attendance', { params: cleanParams(params) });
       setHistory(data);
     } catch (error) {
       message.error('Attendance history loading failed');
@@ -78,18 +106,21 @@ export default function Attendance() {
 
   useEffect(() => {
     loadStudents().catch(() => message.error('Student list loading failed'));
+    loadBatches();
   }, []);
 
   useEffect(() => {
-    loadSheet();
-  }, [date]);
+    loadSheet(sheetBatch);
+  }, [date, sheetBatch]);
 
   useEffect(() => {
     loadHistory();
   }, []);
 
   const updateRow = (key, patch) => {
-    setSheet((prev) => prev.map((row) => row.key === key ? { ...row, ...patch } : row));
+    setSheet((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, ...patch } : row))
+    );
   };
 
   const applyHistoryFilters = (patch) => {
@@ -98,6 +129,7 @@ export default function Attendance() {
     if (Object.prototype.hasOwnProperty.call(patch, 'month') && patch.month) {
       nextFilters.date = null;
     }
+
     if (Object.prototype.hasOwnProperty.call(patch, 'date') && patch.date) {
       nextFilters.month = null;
     }
@@ -107,7 +139,15 @@ export default function Attendance() {
   };
 
   const resetHistoryFilters = () => {
-    const nextFilters = { date: null, month: null, student: '', status: '', search: '' };
+    const nextFilters = {
+      date: null,
+      month: null,
+      student: '',
+      status: '',
+      batch: '',
+      search: ''
+    };
+
     setHistoryFilters(nextFilters);
     loadHistory(nextFilters);
   };
@@ -116,8 +156,13 @@ export default function Attendance() {
     try {
       await api.post('/attendance/bulk', {
         date: date.format('YYYY-MM-DD'),
-        records: sheet.map((row) => ({ student: row.student._id, status: row.status, notes: row.notes }))
+        records: sheet.map((row) => ({
+          student: row.student._id,
+          status: row.status,
+          notes: row.notes
+        }))
       });
+
       message.success('Attendance saved successfully');
       loadHistory();
     } catch (error) {
@@ -140,32 +185,88 @@ export default function Attendance() {
         />
       )
     },
-    { title: 'Notes', render: (_, row) => <Input value={row.notes} onChange={(e) => updateRow(row.key, { notes: e.target.value })} placeholder="Optional note" /> }
+    {
+      title: 'Notes',
+      render: (_, row) => (
+        <Input
+          value={row.notes}
+          onChange={(e) => updateRow(row.key, { notes: e.target.value })}
+          placeholder="Optional note"
+        />
+      )
+    }
   ];
 
   const historyColumns = [
-    { title: 'Date', dataIndex: 'date', render: (value) => dayjs(value).format('DD MMM YYYY') },
-    { title: 'Day', dataIndex: 'date', render: (value) => dayjs(value).format('dddd') },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      render: (value) => dayjs(value).format('DD MMM YYYY')
+    },
+    {
+      title: 'Day',
+      dataIndex: 'date',
+      render: (value) => dayjs(value).format('dddd')
+    },
     { title: 'Student', dataIndex: ['student', 'name'] },
     { title: 'Reg No.', dataIndex: ['student', 'regNo'] },
     { title: 'Batch', dataIndex: ['student', 'batch'] },
-    { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag> },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag>
+    },
     { title: 'Notes', dataIndex: 'notes' }
   ];
 
   return (
     <div>
-      <PageHeader icon={<FiCalendar />} title="Attendance" subtitle="Mark daily attendance and view complete attendance history" />
+      <PageHeader
+        icon={<FiCalendar />}
+        title="Attendance"
+        subtitle="Mark daily attendance and filter attendance batch wise"
+      />
 
       <Card className="content-card" bordered={false}>
         <div className="section-toolbar">
           <Space wrap>
-            <DatePicker value={date} onChange={(value) => setDate(value || dayjs())} format="DD MMM YYYY" />
-            <Button type="primary" icon={<FiSave />} onClick={save}>Save Attendance</Button>
-            <Button icon={<FiRefreshCcw />} onClick={loadSheet}>Refresh Sheet</Button>
+            <DatePicker
+              value={date}
+              onChange={(value) => setDate(value || dayjs())}
+              format="DD MMM YYYY"
+            />
+
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Search batch"
+              value={sheetBatch || undefined}
+              onChange={(value) => setSheetBatch(value || '')}
+              options={batchOptions.map((batch) => ({
+                value: batch,
+                label: batch
+              }))}
+              style={{ width: 230 }}
+            />
+
+            <Button type="primary" icon={<FiSave />} onClick={save}>
+              Save Attendance
+            </Button>
+
+            <Button icon={<FiRefreshCcw />} onClick={() => loadSheet(sheetBatch)}>
+              Refresh Sheet
+            </Button>
           </Space>
         </div>
-        <Table rowKey="key" columns={columns} dataSource={sheet} loading={loading} scroll={{ x: 900 }} />
+
+        <Table
+          rowKey="key"
+          columns={columns}
+          dataSource={sheet}
+          loading={loading}
+          scroll={{ x: 900 }}
+        />
       </Card>
 
       <Card className="content-card" bordered={false} title="Attendance History">
@@ -178,6 +279,7 @@ export default function Attendance() {
               onChange={(value) => applyHistoryFilters({ date: value })}
               format="DD MMM YYYY"
             />
+
             <DatePicker
               allowClear
               picker="month"
@@ -185,6 +287,21 @@ export default function Attendance() {
               value={historyFilters.month}
               onChange={(value) => applyHistoryFilters({ month: value })}
             />
+
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Search batch"
+              value={historyFilters.batch || undefined}
+              onChange={(value) => applyHistoryFilters({ batch: value || '' })}
+              options={batchOptions.map((batch) => ({
+                value: batch,
+                label: batch
+              }))}
+              style={{ width: 230 }}
+            />
+
             <Select
               allowClear
               showSearch
@@ -192,9 +309,13 @@ export default function Attendance() {
               placeholder="Student"
               value={historyFilters.student || undefined}
               onChange={(value) => applyHistoryFilters({ student: value || '' })}
-              options={students.map((student) => ({ value: student._id, label: `${student.name} - ${student.regNo}` }))}
+              options={students.map((student) => ({
+                value: student._id,
+                label: `${student.name} - ${student.regNo}`
+              }))}
               style={{ width: 260 }}
             />
+
             <Select
               allowClear
               placeholder="Status"
@@ -203,19 +324,33 @@ export default function Attendance() {
               options={attendanceStatusOptions}
               style={{ width: 150 }}
             />
+
             <Input.Search
               allowClear
               enterButton={<FiSearch />}
               placeholder="Search name, reg no, batch..."
               value={historyFilters.search}
-              onChange={(event) => setHistoryFilters((prev) => ({ ...prev, search: event.target.value }))}
+              onChange={(event) =>
+                setHistoryFilters((prev) => ({
+                  ...prev,
+                  search: event.target.value
+                }))
+              }
               onSearch={(value) => applyHistoryFilters({ search: value })}
               style={{ width: 300 }}
             />
+
             <Button onClick={resetHistoryFilters}>All History</Button>
           </Space>
         </div>
-        <Table rowKey="_id" columns={historyColumns} dataSource={history} loading={historyLoading} scroll={{ x: 1000 }} />
+
+        <Table
+          rowKey="_id"
+          columns={historyColumns}
+          dataSource={history}
+          loading={historyLoading}
+          scroll={{ x: 1000 }}
+        />
       </Card>
     </div>
   );

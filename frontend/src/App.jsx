@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
-import React from "react";
+import React from 'react';
 
 import Website from './pages/Website.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
@@ -16,6 +16,11 @@ import Courses from './pages/Courses.jsx';
 import Payments from './pages/Payments.jsx';
 import Certificates from './pages/Certificates.jsx';
 import Messages from './pages/Messages.jsx';
+
+const routerFutureFlags = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true
+};
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -39,7 +44,7 @@ const GuestRoute = ({ children }) => {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={routerFutureFlags}>
       <Routes>
         <Route path="/" element={<Website />} />
 

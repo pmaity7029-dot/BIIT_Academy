@@ -8,17 +8,44 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.use(protect);
 
+const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
+
 router.get('/overview', asyncHandler(async (req, res) => {
-  const students = await Student.find({ status: 'Active' }).sort({ name: 1 });
+  const { search = '', batch = '' } = req.query;
+  const studentQuery = { status: 'Active' };
+
+  if (batch) {
+    studentQuery.batch = buildRegex(batch);
+  }
+
+  if (search) {
+    const regex = buildRegex(search);
+
+    studentQuery.$or = [
+      { name: regex },
+      { fatherName: regex },
+      { regNo: regex },
+      { phone: regex },
+      { email: regex },
+      { centre: regex },
+      { batch: regex }
+    ];
+  }
+
+  const students = await Student.find(studentQuery).sort({ name: 1 });
   const attendance = await Attendance.find().populate('student');
   const payments = await Payment.find().populate('student');
 
   const rows = students.map((student) => {
-    const studentAttendance = attendance.filter((item) => String(item.student?._id) === String(student._id));
+    const studentAttendance = attendance.filter(
+      (item) => String(item.student?._id) === String(student._id)
+    );
+
     const present = studentAttendance.filter((item) => item.status === 'Present').length;
     const late = studentAttendance.filter((item) => item.status === 'Late').length;
     const absent = studentAttendance.filter((item) => item.status === 'Absent').length;
     const total = studentAttendance.length;
+
     const paid = payments
       .filter((payment) => String(payment.student?._id) === String(student._id))
       .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);

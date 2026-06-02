@@ -883,3 +883,248 @@ a { color: inherit; text-decoration: none; }
     display: none;
   }
 }
+
+/* Performance page compact desktop fit */
+.performance-toolbar {
+  gap: 16px;
+}
+
+.performance-filter-space {
+  justify-content: flex-end;
+}
+
+.performance-batch-filter {
+  width: 220px;
+}
+
+.performance-sort-filter {
+  width: 225px;
+}
+
+.performance-search-filter {
+  width: 320px;
+}
+
+.performance-table .ant-table-thead > tr > th,
+.performance-table .ant-table-tbody > tr > td {
+  padding: 13px 16px !important;
+}
+
+.performance-table .student-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.performance-table .student-cell strong,
+.performance-table .muted-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.performance-rate-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.performance-progress {
+  flex: 1;
+  min-width: 120px;
+  margin: 0 !important;
+}
+
+.performance-percent {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #333;
+}
+
+.fee-paid-tag {
+  margin: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .performance-batch-filter {
+    width: 200px;
+  }
+
+  .performance-sort-filter {
+    width: 215px;
+  }
+
+  .performance-search-filter {
+    width: 280px;
+  }
+
+  .performance-table .ant-table-thead > tr > th,
+  .performance-table .ant-table-tbody > tr > td {
+    padding: 12px 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .performance-toolbar {
+    align-items: flex-start;
+  }
+
+  .performance-filter-space,
+  .performance-filter-space .ant-space-item,
+  .performance-batch-filter,
+  .performance-sort-filter,
+  .performance-search-filter {
+    width: 100% !important;
+  }
+}
+
+/* Students table compact fit */
+.students-table .ant-table-thead > tr > th,
+.students-table .ant-table-tbody > tr > td {
+  padding: 13px 18px !important;
+}
+
+.students-table .student-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.students-table .student-cell strong,
+.students-table .muted-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.students-table .ant-table-cell {
+  vertical-align: middle;
+}
+
+@media (max-width: 1200px) {
+  .students-table .ant-table-thead > tr > th,
+  .students-table .ant-table-tbody > tr > td {
+    padding: 12px 14px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .students-card .section-toolbar > .ant-space,
+  .students-card .section-toolbar .ant-space-item,
+  .students-card .section-toolbar .ant-select,
+  .students-card .section-toolbar .ant-input-search {
+    width: 100% !important;
+  }
+}
+
+/* Batches table overlap fix */
+.course-batch-table .ant-table-thead > tr > th,
+.course-batch-table .ant-table-tbody > tr > td {
+  padding: 13px 18px !important;
+  vertical-align: middle;
+}
+
+.course-batch-table .ant-table-thead > tr > th {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.course-batch-table .batch-table-text {
+  max-width: 100%;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.course-batch-table .schedule-text {
+  white-space: normal;
+}
+
+.course-batch-table .batch-nowrap {
+  white-space: nowrap;
+}
+
+.course-batch-table .ant-select {
+  max-width: 100%;
+}
+
+.course-batch-table .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 1200px) {
+  .course-batch-table .ant-table-thead > tr > th,
+  .course-batch-table .ant-table-tbody > tr > td {
+    padding: 12px 14px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .course-batch-table .ant-table-thead > tr > th,
+  .course-batch-table .ant-table-tbody > tr > td {
+    padding: 11px 12px !important;
+  }
+}
+
+/* Courses table overlap fix */
+.compact-course-table .ant-table {
+  width: 100%;
+}
+
+.compact-course-table .ant-table-thead > tr > th,
+.compact-course-table .ant-table-tbody > tr > td {
+  padding: 12px 14px !important;
+  vertical-align: middle;
+}
+
+.compact-course-table .ant-table-thead > tr > th {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.compact-course-table .course-table-ellipsis {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.compact-course-table .course-nowrap {
+  white-space: nowrap;
+}
+
+.compact-course-table .ant-table-cell {
+  overflow: hidden;
+}
+
+.compact-course-table .ant-select {
+  max-width: 100%;
+}
+
+.compact-course-table .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 1200px) {
+  .compact-course-table .ant-table-content {
+    overflow-x: hidden !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .compact-course-table .ant-table-thead > tr > th,
+  .compact-course-table .ant-table-tbody > tr > td {
+    padding: 11px 12px !important;
+  }
+}

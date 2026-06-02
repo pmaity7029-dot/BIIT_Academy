@@ -9,6 +9,8 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.use(protect);
 
+const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
+
 router.get('/metrics', asyncHandler(async (req, res) => {
   const [totalStudents, activeStudents, presentToday, certificatesIssued, revenueAgg] = await Promise.all([
     Student.countDocuments(),
@@ -34,21 +36,40 @@ router.get('/metrics', asyncHandler(async (req, res) => {
   });
 }));
 
+router.get('/batches/list', asyncHandler(async (req, res) => {
+  const batches = await Student.distinct('batch', {
+    batch: { $exists: true, $ne: '' }
+  });
+
+  res.json(
+    batches
+      .filter(Boolean)
+      .sort((a, b) => String(a).localeCompare(String(b)))
+  );
+}));
+
 router.get('/', asyncHandler(async (req, res) => {
-  const { search = '', status, centre, batch } = req.query;
+  const { search = '', status = '', centre = '', batch = '' } = req.query;
   const query = {};
 
   if (search) {
+    const regex = buildRegex(search);
+
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { regNo: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } }
+      { name: regex },
+      { fatherName: regex },
+      { regNo: regex },
+      { phone: regex },
+      { email: regex },
+      { centre: regex },
+      { batch: regex },
+      { status: regex }
     ];
   }
+
   if (status) query.status = status;
-  if (centre) query.centre = centre;
-  if (batch) query.batch = batch;
+  if (centre) query.centre = buildRegex(centre);
+  if (batch) query.batch = buildRegex(batch);
 
   const students = await Student.find(query).sort({ createdAt: -1 });
   res.json(students);
@@ -61,6 +82,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const student = await Student.findById(req.params.id);
+
   if (!student) {
     res.status(404);
     throw new Error('Student not found.');
@@ -91,20 +113,27 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const student = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
   if (!student) {
     res.status(404);
     throw new Error('Student not found.');
   }
+
   res.json(student);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
   const student = await Student.findByIdAndDelete(req.params.id);
+
   if (!student) {
     res.status(404);
     throw new Error('Student not found.');
   }
+
   res.json({ message: 'Student deleted successfully.' });
 }));
 

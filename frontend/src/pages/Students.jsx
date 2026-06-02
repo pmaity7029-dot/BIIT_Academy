@@ -9,42 +9,66 @@ import {
   Space,
   Table,
   Tag,
-  message,
-} from "antd";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from "react-icons/fi";
-import dayjs from "dayjs";
-import api from "../api/client.js";
-import PageHeader from "../components/PageHeader.jsx";
-import StudentForm from "../components/StudentForm.jsx";
-import React from "react";
+  message
+} from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from 'react-icons/fi';
+import dayjs from 'dayjs';
+import api from '../api/client.js';
+import PageHeader from '../components/PageHeader.jsx';
+import StudentForm from '../components/StudentForm.jsx';
+import React from 'react';
 
-const studentStatusOptions = ["Active", "Inactive", "Completed"].map(
-  (value) => ({ value }),
-);
+const studentStatusOptions = ['Active', 'Inactive', 'Completed'].map((value) => ({ value }));
 
 const statusColor = (status) => {
-  if (status === "Active") return "green";
-  if (status === "Completed") return "blue";
-  return "default";
+  if (status === 'Active') return 'green';
+  if (status === 'Completed') return 'blue';
+  return 'default';
+};
+
+const cleanParams = (params) => {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
+  );
 };
 
 export default function Students() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+
   const [students, setStudents] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [filters, setFilters] = useState({ search: "", status: "" });
+
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    batch: ''
+  });
+
+  const loadBatches = async () => {
+    try {
+      const { data } = await api.get('/students/batches/list');
+      setBatchOptions(data || []);
+    } catch (error) {
+      setBatchOptions([]);
+    }
+  };
 
   const load = async (nextFilters = filters) => {
     try {
       setLoading(true);
-      const { data } = await api.get("/students", { params: nextFilters });
+
+      const { data } = await api.get('/students', {
+        params: cleanParams(nextFilters)
+      });
+
       setStudents(data);
     } catch (error) {
-      message.error("Unable to load students");
+      message.error('Unable to load students');
     } finally {
       setLoading(false);
     }
@@ -52,23 +76,28 @@ export default function Students() {
 
   useEffect(() => {
     load();
+    loadBatches();
   }, []);
 
   const submit = async () => {
     try {
       const values = await form.validateFields();
-      await api.post("/students", {
+
+      await api.post('/students', {
         ...values,
         dob: values.dob?.toISOString(),
-        enrolledDate: values.enrolledDate?.toISOString(),
+        enrolledDate: values.enrolledDate?.toISOString()
       });
-      message.success("Student enrolled successfully");
+
+      message.success('Student enrolled successfully');
       form.resetFields();
       setOpen(false);
       load();
+      loadBatches();
     } catch (error) {
-      if (!error.errorFields)
-        message.error(error?.response?.data?.message || "Enrollment failed");
+      if (!error.errorFields) {
+        message.error(error?.response?.data?.message || 'Enrollment failed');
+      }
     }
   };
 
@@ -78,51 +107,72 @@ export default function Students() {
     load(nextFilters);
   };
 
+  const resetFilters = () => {
+    const nextFilters = {
+      search: '',
+      status: '',
+      batch: ''
+    };
+
+    setFilters(nextFilters);
+    load(nextFilters);
+  };
+
   const updateStudentStatus = async (student, status) => {
     try {
       const { data } = await api.put(`/students/${student._id}`, { status });
-      message.success("Student status updated");
+
+      message.success('Student status updated');
+
       setStudents((prev) =>
-        prev.map((item) => (item._id === student._id ? data : item)),
+        prev.map((item) => (item._id === student._id ? data : item))
       );
     } catch (error) {
-      message.error(error?.response?.data?.message || "Status update failed");
+      message.error(error?.response?.data?.message || 'Status update failed');
     }
   };
 
   const deleteStudent = async (student) => {
     try {
       await api.delete(`/students/${student._id}`);
-      message.success("Student deleted");
+
+      message.success('Student deleted');
       load();
+      loadBatches();
     } catch (error) {
-      message.error(error?.response?.data?.message || "Student delete failed");
+      message.error(error?.response?.data?.message || 'Student delete failed');
     }
   };
 
   const filteredStudents = useMemo(() => students, [students]);
 
   const columns = [
-    { title: "Reg No.", dataIndex: "regNo", width: 145 },
     {
-      title: "Name",
-      dataIndex: "name",
-      width: 175,
+      title: 'Student',
+      dataIndex: 'name',
+      width: 240,
       render: (text, row) => (
-        <div>
+        <div className="student-cell">
           <strong>{text}</strong>
-          <br />
-          <span className="muted-text">{row.fatherName}</span>
+          <span className="muted-text">{row.regNo}</span>
         </div>
-      ),
+      )
     },
-    { title: "Phone", dataIndex: "phone", width: 130 },
-    { title: "Centre", dataIndex: "centre", width: 175 },
-    { title: "Batch", dataIndex: "batch", width: 165 },
     {
-      title: "Status",
-      dataIndex: "status",
-      width: 150,
+      title: 'Phone',
+      dataIndex: 'phone',
+      width: 140
+    },
+    {
+      title: 'Batch',
+      dataIndex: 'batch',
+      width: 210,
+      ellipsis: true
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      width: 155,
       render: (status, row) => (
         <Select
           value={status}
@@ -131,20 +181,20 @@ export default function Students() {
           onChange={(value) => updateStudentStatus(row, value)}
           options={studentStatusOptions.map((item) => ({
             ...item,
-            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>,
+            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>
           }))}
         />
-      ),
+      )
     },
     {
-      title: "Enrolled",
-      dataIndex: "enrolledDate",
-      width: 130,
-      render: (date) => dayjs(date).format("DD MMM YYYY"),
+      title: 'Enrolled',
+      dataIndex: 'enrolledDate',
+      width: 135,
+      render: (date) => dayjs(date).format('DD MMM YYYY')
     },
     {
-      title: "Actions",
-      width: 155,
+      title: 'Actions',
+      width: 165,
       render: (_, row) => (
         <Space>
           <Button
@@ -153,6 +203,7 @@ export default function Students() {
           >
             View
           </Button>
+
           <Popconfirm
             title="Delete this student?"
             okText="Delete"
@@ -162,8 +213,8 @@ export default function Students() {
             <Button danger icon={<FiTrash2 />} />
           </Popconfirm>
         </Space>
-      ),
-    },
+      )
+    }
   ];
 
   return (
@@ -171,26 +222,42 @@ export default function Students() {
       <PageHeader
         icon={<FiUsers />}
         title="Students"
-        subtitle="Manage student enrolment, search, status, and records"
+        subtitle="Manage student enrolment, search, status, batch, and records"
         actionText="Enroll Student"
         actionIcon={<FiPlus />}
         onAction={() => setOpen(true)}
       />
 
-      <Card className="content-card" bordered={false}>
+      <Card className="content-card students-card" variant="borderless">
         <div className="section-toolbar">
           <strong>All Students ({filteredStudents.length})</strong>
+
           <Space wrap>
             <Select
               allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Search batch"
+              style={{ width: 250 }}
+              value={filters.batch || undefined}
+              onChange={(value) => applyFilters({ batch: value || '' })}
+              options={batchOptions.map((batch) => ({
+                value: batch,
+                label: batch
+              }))}
+            />
+
+            <Select
+              allowClear
               placeholder="Status"
-              style={{ width: 150 }}
+              style={{ width: 170 }}
               value={filters.status || undefined}
-              onChange={(value) => applyFilters({ status: value || "" })}
+              onChange={(value) => applyFilters({ status: value || '' })}
               options={studentStatusOptions}
             />
+
             <Input.Search
-              placeholder="Search name, reg no, phone, email..."
+              placeholder="Search name, reg no, phone, email, batch..."
               allowClear
               enterButton={<FiSearch />}
               value={filters.search}
@@ -198,20 +265,22 @@ export default function Students() {
                 setFilters((prev) => ({ ...prev, search: event.target.value }))
               }
               onSearch={(value) => applyFilters({ search: value })}
-              style={{ width: 320 }}
+              style={{ width: 380 }}
             />
-            <Button onClick={() => applyFilters({ search: "", status: "" })}>
-              Reset
-            </Button>
+
+            <Button onClick={resetFilters}>Reset</Button>
           </Space>
         </div>
+
         <Table
           rowKey="_id"
           columns={columns}
           dataSource={filteredStudents}
           loading={loading}
-          scroll={{ x: "max-content" }}
-          tableLayout="auto"
+          scroll={{ x: 1045 }}
+          tableLayout="fixed"
+          size="middle"
+          className="students-table"
         />
       </Card>
 
