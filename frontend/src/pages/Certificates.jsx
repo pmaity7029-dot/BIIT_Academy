@@ -1169,61 +1169,61 @@ const printCertificate = async (targetRef = certRef) => {
   }
 };
 
-  const columns = [
-    { title: 'Certificate No.', dataIndex: 'certificateNo', width: 180 },
-    {
-      title: 'Student',
-      render: (_, row) => {
-        const data = getCertificateData(row);
+const columns = [
+  { title: 'Certificate No.', dataIndex: 'certificateNo', width: 180 },
+  {
+    title: 'Student',
+    width: 230,
+    render: (_, row) => {
+      const data = getCertificateData(row);
 
-        return (
-          <div>
-            <strong>{data.studentName}</strong>
-            <br />
-            <span className="muted-text">{data.regNo}</span>
-          </div>
-        );
-      }
-    },
-    { title: 'Course', dataIndex: 'courseTitle' },
-    {
-      title: 'Grade',
-      dataIndex: 'grade',
-      width: 90,
-      render: (grade) => <Tag color="gold">{grade}</Tag>
-    },
-    {
-      title: 'Issue Date',
-      dataIndex: 'issueDate',
-      width: 150,
-      render: (date) => dayjs(date).format('DD MMM YYYY')
-    },
-    {
-      title: 'Action',
-      fixed: 'right',
-      width: 250,
-      render: (_, row) => (
-        <Space>
-          <Button icon={<FiAward />} onClick={() => setSelected(row)}>
-            Preview
-          </Button>
-
-          <Button icon={<FiEdit3 />} onClick={() => openEditorFromCertificate(row)}>
-            Edit
-          </Button>
-
-          <Popconfirm
-            title="Delete this certificate?"
-            okText="Delete"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => deleteCertificate(row)}
-          >
-            <Button danger icon={<FiTrash2 />} />
-          </Popconfirm>
-        </Space>
-      )
+      return (
+        <div>
+          <strong>{data.studentName}</strong>
+          <br />
+          <span className="muted-text">{data.regNo}</span>
+        </div>
+      );
     }
-  ];
+  },
+  { title: 'Course', dataIndex: 'courseTitle', width: 330 },
+  {
+    title: 'Grade',
+    dataIndex: 'grade',
+    width: 90,
+    render: (grade) => <Tag color="gold">{grade}</Tag>
+  },
+  {
+    title: 'Issue Date',
+    dataIndex: 'issueDate',
+    width: 145,
+    render: (date) => dayjs(date).format('DD MMM YYYY')
+  },
+  {
+    title: 'Action',
+    width: 245,
+    render: (_, row) => (
+      <Space>
+        <Button icon={<FiAward />} onClick={() => setSelected(row)}>
+          Preview
+        </Button>
+
+        <Button icon={<FiEdit3 />} onClick={() => openEditorFromCertificate(row)}>
+          Edit
+        </Button>
+
+        <Popconfirm
+          title="Delete this certificate?"
+          okText="Delete"
+          okButtonProps={{ danger: true }}
+          onConfirm={() => deleteCertificate(row)}
+        >
+          <Button danger icon={<FiTrash2 />} />
+        </Popconfirm>
+      </Space>
+    )
+  }
+];
 
   const selectedData = selected ? getCertificateData(selected) : null;
 
@@ -1246,11 +1246,18 @@ const printCertificate = async (targetRef = certRef) => {
             <strong>Certificate Preview — {selectedData.certificateNo}</strong>
 
             <Space wrap>
-              <Button icon={<FiEdit3 />} onClick={() => openEditorFromCertificate(selected)}>
+              <Button
+                icon={<FiEdit3 />}
+                onClick={() => openEditorFromCertificate(selected)}
+              >
                 Edit This Certificate
               </Button>
 
-              <Button type="primary" icon={<FiPrinter />} onClick={() => printCertificate(certRef)}>
+              <Button
+                type="primary"
+                icon={<FiPrinter />}
+                onClick={() => printCertificate(certRef)}
+              >
                 Print / Save PDF
               </Button>
             </Space>
@@ -1266,7 +1273,11 @@ const printCertificate = async (targetRef = certRef) => {
         </Card>
       )}
 
-      <Card className="content-card" bordered={false} title="Certificate Records">
+      <Card
+        className="content-card"
+        bordered={false}
+        title="Certificate Records"
+      >
         <div className="section-toolbar compact-toolbar">
           <Space wrap>
             <Input.Search
@@ -1284,8 +1295,8 @@ const printCertificate = async (targetRef = certRef) => {
 
             <Button
               onClick={() => {
-                setSearch('');
-                load('');
+                setSearch("");
+                load("");
               }}
             >
               Reset
@@ -1298,16 +1309,21 @@ const printCertificate = async (targetRef = certRef) => {
           columns={columns}
           dataSource={certificates}
           loading={loading}
-          scroll={{ x: 1200 }}
+          scroll={{ x: "max-content" }}
+          tableLayout="auto"
           onRow={(record) => ({
             onClick: () => setSelected(record),
-            onDoubleClick: () => openEditorFromCertificate(record)
+            onDoubleClick: () => openEditorFromCertificate(record),
           })}
         />
       </Card>
 
       <Modal
-        title={editingId ? 'Edit Certificate Like Document' : 'Generate Dummy Certificate'}
+        title={
+          editingId
+            ? "Edit Certificate Like Document"
+            : "Generate Dummy Certificate"
+        }
         open={editorOpen}
         onCancel={() => setEditorOpen(false)}
         width="96vw"
@@ -1316,66 +1332,111 @@ const printCertificate = async (targetRef = certRef) => {
           <Button key="cancel" onClick={() => setEditorOpen(false)}>
             Cancel
           </Button>,
-          <Button key="print" icon={<FiPrinter />} onClick={() => printCertificate(editorCertRef)}>
+          <Button
+            key="print"
+            icon={<FiPrinter />}
+            onClick={() => printCertificate(editorCertRef)}
+          >
             Print Preview
           </Button>,
-          <Button key="save" type="primary" icon={<FiSave />} onClick={saveCertificate}>
-            {editingId ? 'Update Certificate' : 'Save Certificate'}
-          </Button>
+          <Button
+            key="save"
+            type="primary"
+            icon={<FiSave />}
+            onClick={saveCertificate}
+          >
+            {editingId ? "Update Certificate" : "Save Certificate"}
+          </Button>,
         ]}
         destroyOnClose
       >
         <div className="certificate-editor-grid">
           <div className="certificate-editor-form">
-            
-
-            <label className="editor-field-label">Select Existing Student Optional</label>
+            <label className="editor-field-label">
+              Select Existing Student Optional
+            </label>
             <Select
               allowClear
               showSearch
               optionFilterProp="label"
               placeholder="Optional: select student"
               value={editor.student || undefined}
-              onChange={(value) => selectStudentForEditor(value || '')}
+              onChange={(value) => selectStudentForEditor(value || "")}
               options={students.map((student) => ({
                 value: student._id,
-                label: `${student.name} - ${student.regNo}`
+                label: `${student.name} - ${student.regNo}`,
               }))}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
 
             <label className="editor-field-label">Student Name</label>
-            <Input value={editor.studentName} onChange={(event) => updateEditor('studentName', event.target.value)} />
+            <Input
+              value={editor.studentName}
+              onChange={(event) =>
+                updateEditor("studentName", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Father Name</label>
-            <Input value={editor.fatherName} onChange={(event) => updateEditor('fatherName', event.target.value)} />
+            <Input
+              value={editor.fatherName}
+              onChange={(event) =>
+                updateEditor("fatherName", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Gender</label>
             <Select
               value={editor.gender}
-              onChange={(value) => updateEditor('gender', value)}
-              options={[{ value: 'Male' }, { value: 'Female' }, { value: 'Other' }]}
-              style={{ width: '100%' }}
+              onChange={(value) => updateEditor("gender", value)}
+              options={[
+                { value: "Male" },
+                { value: "Female" },
+                { value: "Other" },
+              ]}
+              style={{ width: "100%" }}
             />
 
             <label className="editor-field-label">Reg No</label>
-            <Input value={editor.regNo} onChange={(event) => updateEditor('regNo', event.target.value)} />
+            <Input
+              value={editor.regNo}
+              onChange={(event) => updateEditor("regNo", event.target.value)}
+            />
 
             <label className="editor-field-label">Date of Birth Text</label>
-            <Input value={editor.birthDateText} onChange={(event) => updateEditor('birthDateText', event.target.value)} />
+            <Input
+              value={editor.birthDateText}
+              onChange={(event) =>
+                updateEditor("birthDateText", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Course Title</label>
-            <Input value={editor.courseTitle} onChange={(event) => updateEditor('courseTitle', event.target.value)} />
+            <Input
+              value={editor.courseTitle}
+              onChange={(event) =>
+                updateEditor("courseTitle", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Duration / Hours</label>
-            <Input value={editor.duration} onChange={(event) => updateEditor('duration', event.target.value)} />
+            <Input
+              value={editor.duration}
+              onChange={(event) => updateEditor("duration", event.target.value)}
+            />
 
             <label className="editor-field-label">Grade</label>
             <Select
               value={editor.grade}
-              onChange={(value) => updateEditor('grade', value)}
-              options={[{ value: 'A+' }, { value: 'A' }, { value: 'B+' }, { value: 'B' }, { value: 'C' }]}
-              style={{ width: '100%' }}
+              onChange={(value) => updateEditor("grade", value)}
+              options={[
+                { value: "A+" },
+                { value: "A" },
+                { value: "B+" },
+                { value: "B" },
+                { value: "C" },
+              ]}
+              style={{ width: "100%" }}
             />
 
             <label className="editor-field-label">Issue Date</label>
@@ -1384,40 +1445,100 @@ const printCertificate = async (targetRef = certRef) => {
               value={editor.issueDate}
               format="DD MMM YYYY"
               onChange={(value) => {
-                updateEditor('issueDate', value || dayjs());
-                updateEditor('issueDateText', (value || dayjs()).format('DD/MM/YY'));
+                updateEditor("issueDate", value || dayjs());
+                updateEditor(
+                  "issueDateText",
+                  (value || dayjs()).format("DD/MM/YY"),
+                );
               }}
             />
 
             <label className="editor-field-label">Issue Date Text</label>
-            <Input value={editor.issueDateText} onChange={(event) => updateEditor('issueDateText', event.target.value)} />
+            <Input
+              value={editor.issueDateText}
+              onChange={(event) =>
+                updateEditor("issueDateText", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Percentage</label>
-            <Input value={editor.percentage} onChange={(event) => updateEditor('percentage', event.target.value)} />
+            <Input
+              value={editor.percentage}
+              onChange={(event) =>
+                updateEditor("percentage", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Total Full Marks</label>
-            <Input value={editor.totalFullMarks} onChange={(event) => updateEditor('totalFullMarks', event.target.value)} />
+            <Input
+              value={editor.totalFullMarks}
+              onChange={(event) =>
+                updateEditor("totalFullMarks", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Total Marks Obtain</label>
-            <Input value={editor.totalMarksObtain} onChange={(event) => updateEditor('totalMarksObtain', event.target.value)} />
+            <Input
+              value={editor.totalMarksObtain}
+              onChange={(event) =>
+                updateEditor("totalMarksObtain", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Institute Name</label>
-            <Input value={editor.instituteName} onChange={(event) => updateEditor('instituteName', event.target.value)} />
+            <Input
+              value={editor.instituteName}
+              onChange={(event) =>
+                updateEditor("instituteName", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Office Address</label>
-            <Input value={editor.officeAddress} onChange={(event) => updateEditor('officeAddress', event.target.value)} />
+            <Input
+              value={editor.officeAddress}
+              onChange={(event) =>
+                updateEditor("officeAddress", event.target.value)
+              }
+            />
 
             <label className="editor-field-label">Website</label>
-            <Input value={editor.website} onChange={(event) => updateEditor('website', event.target.value)} />
+            <Input
+              value={editor.website}
+              onChange={(event) => updateEditor("website", event.target.value)}
+            />
 
             <label className="editor-field-label">Module Details</label>
             {editor.moduleRows.map((row, index) => (
               <div className="module-editor-row" key={`${row.no}-${index}`}>
-                <Input value={row.no} onChange={(event) => updateModule(index, 'no', event.target.value)} />
-                <Input value={row.title} onChange={(event) => updateModule(index, 'title', event.target.value)} />
-                <Input value={row.fullMarks} onChange={(event) => updateModule(index, 'fullMarks', event.target.value)} />
-                <Input value={row.marksObtain} onChange={(event) => updateModule(index, 'marksObtain', event.target.value)} />
-                <Button danger icon={<FiTrash2 />} onClick={() => removeModuleRow(index)} />
+                <Input
+                  value={row.no}
+                  onChange={(event) =>
+                    updateModule(index, "no", event.target.value)
+                  }
+                />
+                <Input
+                  value={row.title}
+                  onChange={(event) =>
+                    updateModule(index, "title", event.target.value)
+                  }
+                />
+                <Input
+                  value={row.fullMarks}
+                  onChange={(event) =>
+                    updateModule(index, "fullMarks", event.target.value)
+                  }
+                />
+                <Input
+                  value={row.marksObtain}
+                  onChange={(event) =>
+                    updateModule(index, "marksObtain", event.target.value)
+                  }
+                />
+                <Button
+                  danger
+                  icon={<FiTrash2 />}
+                  onClick={() => removeModuleRow(index)}
+                />
               </div>
             ))}
 

@@ -596,3 +596,121 @@ a { color: inherit; text-decoration: none; }
     aspect-ratio: 1120 / 792;
   }
 }
+
+
+/* Admin table 100% browser zoom fix */
+.admin-shell .ant-layout {
+  min-width: 0;
+}
+
+.admin-content {
+  overflow-x: hidden;
+}
+
+.content-card {
+  overflow: hidden;
+}
+
+.content-card .ant-card-body {
+  overflow: hidden;
+}
+
+.section-toolbar {
+  flex-wrap: wrap;
+}
+
+.section-toolbar > .ant-space {
+  max-width: 100%;
+}
+
+.section-toolbar .ant-input-search {
+  max-width: min(340px, 100%);
+}
+
+.content-card .ant-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+.content-card .ant-table {
+  font-size: 14px;
+}
+
+.content-card .ant-table-thead > tr > th,
+.content-card .ant-table-tbody > tr > td {
+  padding: 14px 18px;
+  vertical-align: middle;
+}
+
+.content-card .ant-table-thead > tr > th {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.content-card .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
+.content-card .ant-table-tbody > tr > td .muted-text {
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.content-card .ant-table-cell-fix-right,
+.content-card .ant-table-cell-fix-right-first,
+.content-card .ant-table-cell-fix-right-last {
+  position: static !important;
+  right: auto !important;
+  left: auto !important;
+  z-index: auto !important;
+  box-shadow: none !important;
+}
+
+.content-card .ant-table-cell-fix-right-first::after,
+.content-card .ant-table-cell-fix-right-last::after,
+.content-card .ant-table-ping-right .ant-table-container::after,
+.content-card .ant-table-ping-left .ant-table-container::before {
+  display: none !important;
+}
+
+.content-card .ant-table-content {
+  overflow-x: auto !important;
+}
+
+.content-card .ant-btn {
+  height: 36px;
+}
+
+@media (max-width: 1200px) {
+  .content-card .ant-table-thead > tr > th,
+  .content-card .ant-table-tbody > tr > td {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-toolbar {
+    align-items: flex-start;
+  }
+
+  .section-toolbar > strong {
+    width: 100%;
+  }
+
+  .section-toolbar .ant-space,
+  .section-toolbar .ant-space-item,
+  .section-toolbar .ant-input-search,
+  .section-toolbar .ant-select,
+  .section-toolbar .ant-btn {
+    max-width: 100%;
+  }
+
+  .content-card .ant-table {
+    font-size: 13px;
+  }
+
+  .content-card .ant-table-thead > tr > th,
+  .content-card .ant-table-tbody > tr > td {
+    padding: 11px 12px;
+  }
+}

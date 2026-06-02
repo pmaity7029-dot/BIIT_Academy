@@ -1,19 +1,33 @@
-import { Button, Card, Drawer, Form, Input, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import api from '../api/client.js';
-import PageHeader from '../components/PageHeader.jsx';
-import StudentForm from '../components/StudentForm.jsx';
-import React from 'react';
+import {
+  Button,
+  Card,
+  Drawer,
+  Form,
+  Input,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tag,
+  message,
+} from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from "react-icons/fi";
+import dayjs from "dayjs";
+import api from "../api/client.js";
+import PageHeader from "../components/PageHeader.jsx";
+import StudentForm from "../components/StudentForm.jsx";
+import React from "react";
 
-const studentStatusOptions = ['Active', 'Inactive', 'Completed'].map((value) => ({ value }));
+const studentStatusOptions = ["Active", "Inactive", "Completed"].map(
+  (value) => ({ value }),
+);
 
 const statusColor = (status) => {
-  if (status === 'Active') return 'green';
-  if (status === 'Completed') return 'blue';
-  return 'default';
+  if (status === "Active") return "green";
+  if (status === "Completed") return "blue";
+  return "default";
 };
 
 export default function Students() {
@@ -22,36 +36,39 @@ export default function Students() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [filters, setFilters] = useState({ search: '', status: '' });
+  const [filters, setFilters] = useState({ search: "", status: "" });
 
   const load = async (nextFilters = filters) => {
     try {
       setLoading(true);
-      const { data } = await api.get('/students', { params: nextFilters });
+      const { data } = await api.get("/students", { params: nextFilters });
       setStudents(data);
     } catch (error) {
-      message.error('Unable to load students');
+      message.error("Unable to load students");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const submit = async () => {
     try {
       const values = await form.validateFields();
-      await api.post('/students', {
+      await api.post("/students", {
         ...values,
         dob: values.dob?.toISOString(),
-        enrolledDate: values.enrolledDate?.toISOString()
+        enrolledDate: values.enrolledDate?.toISOString(),
       });
-      message.success('Student enrolled successfully');
+      message.success("Student enrolled successfully");
       form.resetFields();
       setOpen(false);
       load();
     } catch (error) {
-      if (!error.errorFields) message.error(error?.response?.data?.message || 'Enrollment failed');
+      if (!error.errorFields)
+        message.error(error?.response?.data?.message || "Enrollment failed");
     }
   };
 
@@ -64,68 +81,89 @@ export default function Students() {
   const updateStudentStatus = async (student, status) => {
     try {
       const { data } = await api.put(`/students/${student._id}`, { status });
-      message.success('Student status updated');
-      setStudents((prev) => prev.map((item) => (item._id === student._id ? data : item)));
+      message.success("Student status updated");
+      setStudents((prev) =>
+        prev.map((item) => (item._id === student._id ? data : item)),
+      );
     } catch (error) {
-      message.error(error?.response?.data?.message || 'Status update failed');
+      message.error(error?.response?.data?.message || "Status update failed");
     }
   };
 
   const deleteStudent = async (student) => {
     try {
       await api.delete(`/students/${student._id}`);
-      message.success('Student deleted');
+      message.success("Student deleted");
       load();
     } catch (error) {
-      message.error(error?.response?.data?.message || 'Student delete failed');
+      message.error(error?.response?.data?.message || "Student delete failed");
     }
   };
 
   const filteredStudents = useMemo(() => students, [students]);
 
   const columns = [
-    { title: 'Reg No.', dataIndex: 'regNo', width: 160 },
+    { title: "Reg No.", dataIndex: "regNo", width: 145 },
     {
-      title: 'Name',
-      dataIndex: 'name',
+      title: "Name",
+      dataIndex: "name",
+      width: 175,
       render: (text, row) => (
         <div>
-          <strong>{text}</strong><br />
+          <strong>{text}</strong>
+          <br />
           <span className="muted-text">{row.fatherName}</span>
         </div>
-      )
+      ),
     },
-    { title: 'Phone', dataIndex: 'phone' },
-    { title: 'Centre', dataIndex: 'centre' },
-    { title: 'Batch', dataIndex: 'batch' },
+    { title: "Phone", dataIndex: "phone", width: 130 },
+    { title: "Centre", dataIndex: "centre", width: 175 },
+    { title: "Batch", dataIndex: "batch", width: 165 },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      width: 160,
+      title: "Status",
+      dataIndex: "status",
+      width: 150,
       render: (status, row) => (
         <Select
           value={status}
           size="small"
-          style={{ width: 130 }}
+          style={{ width: 125 }}
           onChange={(value) => updateStudentStatus(row, value)}
-          options={studentStatusOptions.map((item) => ({ ...item, label: <Tag color={statusColor(item.value)}>{item.value}</Tag> }))}
+          options={studentStatusOptions.map((item) => ({
+            ...item,
+            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>,
+          }))}
         />
-      )
+      ),
     },
-    { title: 'Enrolled', dataIndex: 'enrolledDate', render: (date) => dayjs(date).format('DD MMM YYYY') },
     {
-      title: 'Actions',
-      fixed: 'right',
-      width: 190,
+      title: "Enrolled",
+      dataIndex: "enrolledDate",
+      width: 130,
+      render: (date) => dayjs(date).format("DD MMM YYYY"),
+    },
+    {
+      title: "Actions",
+      width: 155,
       render: (_, row) => (
         <Space>
-          <Button icon={<FiEye />} onClick={() => navigate(`/admin/students/${row._id}`)}>View</Button>
-          <Popconfirm title="Delete this student?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteStudent(row)}>
+          <Button
+            icon={<FiEye />}
+            onClick={() => navigate(`/admin/students/${row._id}`)}
+          >
+            View
+          </Button>
+          <Popconfirm
+            title="Delete this student?"
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => deleteStudent(row)}
+          >
             <Button danger icon={<FiTrash2 />} />
           </Popconfirm>
         </Space>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -148,7 +186,7 @@ export default function Students() {
               placeholder="Status"
               style={{ width: 150 }}
               value={filters.status || undefined}
-              onChange={(value) => applyFilters({ status: value || '' })}
+              onChange={(value) => applyFilters({ status: value || "" })}
               options={studentStatusOptions}
             />
             <Input.Search
@@ -156,14 +194,25 @@ export default function Students() {
               allowClear
               enterButton={<FiSearch />}
               value={filters.search}
-              onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
+              onChange={(event) =>
+                setFilters((prev) => ({ ...prev, search: event.target.value }))
+              }
               onSearch={(value) => applyFilters({ search: value })}
               style={{ width: 320 }}
             />
-            <Button onClick={() => applyFilters({ search: '', status: '' })}>Reset</Button>
+            <Button onClick={() => applyFilters({ search: "", status: "" })}>
+              Reset
+            </Button>
           </Space>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={filteredStudents} loading={loading} scroll={{ x: 1200 }} />
+        <Table
+          rowKey="_id"
+          columns={columns}
+          dataSource={filteredStudents}
+          loading={loading}
+          scroll={{ x: "max-content" }}
+          tableLayout="auto"
+        />
       </Card>
 
       <Drawer
@@ -171,7 +220,14 @@ export default function Students() {
         width={780}
         open={open}
         onClose={() => setOpen(false)}
-        extra={<Space><Button onClick={() => setOpen(false)}>Cancel</Button><Button type="primary" onClick={submit}>Save Student</Button></Space>}
+        extra={
+          <Space>
+            <Button onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="primary" onClick={submit}>
+              Save Student
+            </Button>
+          </Space>
+        }
       >
         <StudentForm form={form} />
       </Drawer>
