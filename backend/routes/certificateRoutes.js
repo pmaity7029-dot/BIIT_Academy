@@ -7,6 +7,43 @@ const router = express.Router();
 
 router.use(protect);
 
+
+const getMarksNumber = (value) => {
+  const match = String(value ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+};
+
+const formatMarksNumber = (value) => {
+  const rounded = Math.round((Number(value) || 0) * 100) / 100;
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/\.?0+$/, '');
+};
+
+const calculateCertificateMarks = (payload = {}) => {
+  if (!Array.isArray(payload.moduleRows) || !payload.moduleRows.length) {
+    return payload;
+  }
+
+  const totalFullMarks = payload.moduleRows.reduce(
+    (sum, row) => sum + getMarksNumber(row.fullMarks),
+    0
+  );
+  const totalMarksObtain = payload.moduleRows.reduce(
+    (sum, row) => sum + getMarksNumber(row.marksObtain),
+    0
+  );
+
+  return {
+    ...payload,
+    totalFullMarks: formatMarksNumber(totalFullMarks),
+    totalMarksObtain: formatMarksNumber(totalMarksObtain),
+    percentage: totalFullMarks > 0
+      ? formatMarksNumber((totalMarksObtain / totalFullMarks) * 100)
+      : '0'
+  };
+};
+
 const populateCertificate = (query) => query.populate('student').populate('issuedBy', 'name');
 
 const buildSearchText = (certificate) => {
@@ -52,7 +89,7 @@ router.get(
 router.post(
   '/',
   asyncHandler(async (req, res) => {
-    const payload = { ...req.body, issuedBy: req.user._id };
+    const payload = calculateCertificateMarks({ ...req.body, issuedBy: req.user._id });
 
     if (!payload.student) {
       delete payload.student;
@@ -82,7 +119,7 @@ router.get(
 router.put(
   '/:id',
   asyncHandler(async (req, res) => {
-    const payload = { ...req.body };
+    const payload = calculateCertificateMarks({ ...req.body });
 
     if (!payload.student) {
       payload.student = null;

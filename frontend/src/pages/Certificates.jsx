@@ -50,27 +50,74 @@ const defaultModules = [
   { no: '4.', title: 'Project work and Practical', fullMarks: '200', marksObtain: '150' }
 ];
 
-const makeDummyCertificate = () => ({
-  certificateNo: 'Auto Generate',
-  student: '',
-  studentName: 'BISWAJIT HAZRA',
-  fatherName: 'Manik Hazra',
-  gender: 'Male',
-  regNo: 'BIIT0120265902',
-  birthDateText: '03 April 2004',
-  courseTitle: 'Frontend Web Development',
-  duration: '6 Months / 120 hrs',
-  grade: 'A',
-  percentage: '68',
-  totalFullMarks: '500',
-  totalMarksObtain: '342',
-  moduleRows: defaultModules,
-  issueDate: dayjs(),
-  issueDateText: dayjs().format('DD/MM/YY'),
-  instituteName: 'Bengal Institute of IT & Technology',
-  officeAddress: 'H.O. & Reg. Office : Midnapore, West Bengal',
-  website: 'www.biitedu.in'
-});
+const getMarksNumber = (value) => {
+  const match = String(value ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+};
+
+const formatMarksNumber = (value) => {
+  const rounded = Math.round((Number(value) || 0) * 100) / 100;
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/\.?0+$/, '');
+};
+
+const cloneModuleRows = (rows = []) =>
+  rows.map((row, index) => ({
+    no: row?.no || `${index + 1}.`,
+    title: row?.title || '',
+    fullMarks: row?.fullMarks ?? '',
+    marksObtain: row?.marksObtain ?? ''
+  }));
+
+const calculateMarksSummary = (rows = []) => {
+  const totalFullMarks = rows.reduce(
+    (sum, row) => sum + getMarksNumber(row.fullMarks),
+    0
+  );
+  const totalMarksObtain = rows.reduce(
+    (sum, row) => sum + getMarksNumber(row.marksObtain),
+    0
+  );
+
+  return {
+    totalFullMarks: formatMarksNumber(totalFullMarks),
+    totalMarksObtain: formatMarksNumber(totalMarksObtain),
+    percentage: totalFullMarks > 0
+      ? formatMarksNumber((totalMarksObtain / totalFullMarks) * 100)
+      : '0'
+  };
+};
+
+const withCalculatedMarks = (certificate) => {
+  const moduleRows = cloneModuleRows(certificate.moduleRows?.length ? certificate.moduleRows : defaultModules);
+
+  return {
+    ...certificate,
+    moduleRows,
+    ...calculateMarksSummary(moduleRows)
+  };
+};
+
+const makeDummyCertificate = () =>
+  withCalculatedMarks({
+    certificateNo: 'Auto Generate',
+    student: '',
+    studentName: 'BISWAJIT HAZRA',
+    fatherName: 'Manik Hazra',
+    gender: 'Male',
+    regNo: 'BIIT0120265902',
+    birthDateText: '03 April 2004',
+    courseTitle: 'Frontend Web Development',
+    duration: '6 Months / 120 hrs',
+    grade: 'A',
+    moduleRows: cloneModuleRows(defaultModules),
+    issueDate: dayjs(),
+    issueDateText: dayjs().format('DD/MM/YY'),
+    instituteName: 'Bengal Institute of IT & Technology',
+    officeAddress: 'H.O. & Reg. Office : Midnapore, West Bengal',
+    website: 'www.biitedu.in'
+  });
 
 const getRelation = (gender) => {
   if (gender === 'Male') return 'Son';
@@ -83,7 +130,7 @@ const getCertificateData = (certificate) => {
 
   if (!certificate) return makeDummyCertificate();
 
-  return {
+  return withCalculatedMarks({
     _id: certificate._id,
     certificateNo: certificate.certificateNo || 'Auto Generate',
     student: student?._id || certificate.student || '',
@@ -97,9 +144,6 @@ const getCertificateData = (certificate) => {
     courseTitle: certificate.courseTitle || 'Frontend Web Development',
     duration: certificate.duration || certificate.remarks || '6 Months / 120 hrs',
     grade: certificate.grade || 'A',
-    percentage: certificate.percentage || '68',
-    totalFullMarks: certificate.totalFullMarks || '500',
-    totalMarksObtain: certificate.totalMarksObtain || '342',
     moduleRows: certificate.moduleRows?.length ? certificate.moduleRows : defaultModules,
     issueDate: certificate.issueDate ? dayjs(certificate.issueDate) : dayjs(),
     issueDateText:
@@ -108,11 +152,14 @@ const getCertificateData = (certificate) => {
     instituteName: certificate.instituteName || 'Bengal Institute of IT & Technology',
     officeAddress: certificate.officeAddress || 'H.O. & Reg. Office : Midnapore, West Bengal',
     website: certificate.website || 'www.biit.in'
-  };
+  });
 };
 
 const CERTIFICATE_STYLES = `
   .classic-certificate-wrap {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
     width: 100%;
     overflow-x: auto;
     padding: 14px 0;
@@ -120,6 +167,8 @@ const CERTIFICATE_STYLES = `
 
   .classic-certificate {
     position: relative;
+    z-index: 0;
+    isolation: isolate;
     width: 1122px;
     height: 794px;
     margin: 0 auto;
@@ -819,35 +868,15 @@ const ClassicCertificate = React.forwardRef(function ClassicCertificate(
 
                   <tr className="classic-total-row">
                     <td colSpan="2">
-                      Percentage :{' '}
-                      <EditableField
-                        value={data.percentage}
-                        editable={editable}
-                        onChange={edit('percentage')}
-                      />{' '}
-                      % &nbsp;&nbsp; Grade :{' '}
+                      Percentage : {data.percentage} % &nbsp;&nbsp; Grade :{' '}
                       <EditableField
                         value={data.grade}
                         editable={editable}
                         onChange={edit('grade')}
                       />
                     </td>
-                    <td>
-                      Total{' '}
-                      <EditableField
-                        value={data.totalFullMarks}
-                        editable={editable}
-                        onChange={edit('totalFullMarks')}
-                      />
-                    </td>
-                    <td>
-                      Obtained{' '}
-                      <EditableField
-                        value={data.totalMarksObtain}
-                        editable={editable}
-                        onChange={edit('totalMarksObtain')}
-                      />
-                    </td>
+                    <td>Total {data.totalFullMarks}</td>
+                    <td>Obtained {data.totalMarksObtain}</td>
                   </tr>
                 </tbody>
               </table>
@@ -937,18 +966,18 @@ export default function Certificates() {
   };
 
   const updateModule = (index, field, value) => {
-    setEditor((prev) => ({
-      ...prev,
-      moduleRows: prev.moduleRows.map((row, rowIndex) =>
+    setEditor((prev) => {
+      const moduleRows = prev.moduleRows.map((row, rowIndex) =>
         rowIndex === index ? { ...row, [field]: value } : row
-      )
-    }));
+      );
+
+      return withCalculatedMarks({ ...prev, moduleRows });
+    });
   };
 
   const addModuleRow = () => {
-    setEditor((prev) => ({
-      ...prev,
-      moduleRows: [
+    setEditor((prev) => {
+      const moduleRows = [
         ...prev.moduleRows,
         {
           no: `${prev.moduleRows.length + 1}.`,
@@ -956,15 +985,18 @@ export default function Certificates() {
           fullMarks: '100',
           marksObtain: '80'
         }
-      ]
-    }));
+      ];
+
+      return withCalculatedMarks({ ...prev, moduleRows });
+    });
   };
 
   const removeModuleRow = (index) => {
-    setEditor((prev) => ({
-      ...prev,
-      moduleRows: prev.moduleRows.filter((_, rowIndex) => rowIndex !== index)
-    }));
+    setEditor((prev) => {
+      const moduleRows = prev.moduleRows.filter((_, rowIndex) => rowIndex !== index);
+
+      return withCalculatedMarks({ ...prev, moduleRows });
+    });
   };
 
   const openNewEditor = () => {
@@ -994,13 +1026,15 @@ export default function Certificates() {
   };
 
   const buildPayload = () => {
+    const calculatedEditor = withCalculatedMarks(editor);
+
     const payload = {
-      ...editor,
-      issueDate: editor.issueDate?.toISOString
-        ? editor.issueDate.toISOString()
+      ...calculatedEditor,
+      issueDate: calculatedEditor.issueDate?.toISOString
+        ? calculatedEditor.issueDate.toISOString()
         : dayjs().toISOString(),
-      remarks: editor.duration,
-      moduleRows: editor.moduleRows.map((row) => ({
+      remarks: calculatedEditor.duration,
+      moduleRows: calculatedEditor.moduleRows.map((row) => ({
         no: row.no || '',
         title: row.title || '',
         fullMarks: row.fullMarks || '',
@@ -1470,29 +1504,14 @@ const columns = [
               }
             />
 
-            <label className="editor-field-label">Percentage</label>
-            <Input
-              value={editor.percentage}
-              onChange={(event) =>
-                updateEditor("percentage", event.target.value)
-              }
-            />
+            <label className="editor-field-label">Percentage Auto Calculated</label>
+            <Input value={`${editor.percentage}%`} readOnly />
 
-            <label className="editor-field-label">Total Full Marks</label>
-            <Input
-              value={editor.totalFullMarks}
-              onChange={(event) =>
-                updateEditor("totalFullMarks", event.target.value)
-              }
-            />
+            <label className="editor-field-label">Total Full Marks Auto Calculated</label>
+            <Input value={editor.totalFullMarks} readOnly />
 
-            <label className="editor-field-label">Total Marks Obtain</label>
-            <Input
-              value={editor.totalMarksObtain}
-              onChange={(event) =>
-                updateEditor("totalMarksObtain", event.target.value)
-              }
-            />
+            <label className="editor-field-label">Total Marks Obtain Auto Calculated</label>
+            <Input value={editor.totalMarksObtain} readOnly />
 
             <label className="editor-field-label">Institute Name</label>
             <Input

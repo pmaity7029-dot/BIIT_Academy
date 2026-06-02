@@ -1,4 +1,4 @@
-import { Button, Card, Form, Input, Select, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Form, Input, Select, Table, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { FiMail, FiSend } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -64,7 +64,7 @@ export default function Messages() {
   const columns = [
     { title: 'Subject', dataIndex: 'subject' },
     { title: 'Recipients', dataIndex: 'recipients', render: (value) => value?.length || 0 },
-    { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={status === 'Sent' ? 'green' : status === 'Skipped' ? 'blue' : 'red'}>{status}</Tag> },
+    { title: 'Status', dataIndex: 'status', render: (status) => <span>{status}</span> },
     { title: 'Date', dataIndex: 'createdAt', render: (date) => dayjs(date).format('DD MMM YYYY hh:mm A') }
   ];
 

@@ -53,8 +53,24 @@ export default function Students() {
 
   const loadBatches = async () => {
     try {
-      const { data } = await api.get('/students/batches/list');
-      setBatchOptions(data || []);
+      const [studentBatchRes, courseBatchRes] = await Promise.allSettled([
+        api.get('/students/batches/list'),
+        api.get('/courses/batches/list')
+      ]);
+
+      const studentBatches =
+        studentBatchRes.status === 'fulfilled' ? studentBatchRes.value.data || [] : [];
+
+      const courseBatches =
+        courseBatchRes.status === 'fulfilled'
+          ? (courseBatchRes.value.data || []).map((batch) => batch.name).filter(Boolean)
+          : [];
+
+      setBatchOptions(
+        [...new Set([...studentBatches, ...courseBatches])]
+          .filter(Boolean)
+          .sort((a, b) => String(a).localeCompare(String(b)))
+      );
     } catch (error) {
       setBatchOptions([]);
     }
@@ -330,7 +346,7 @@ export default function Students() {
           </Space>
         }
       >
-        <StudentForm form={form} />
+        <StudentForm form={form} batchOptions={batchOptions} />
       </Drawer>
     </div>
   );

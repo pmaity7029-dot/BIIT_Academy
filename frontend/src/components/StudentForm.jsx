@@ -1,6 +1,6 @@
 import { DatePicker, Form, Input, Select } from 'antd';
 import React from "react";
-export default function StudentForm({ form }) {
+export default function StudentForm({ form, batchOptions = [] }) {
   return (
     <Form form={form} layout="vertical" className="form-grid">
       <Form.Item name="name" label="Student Name" rules={[{ required: true, message: 'Student name is required' }]}>
@@ -31,7 +31,16 @@ export default function StudentForm({ form }) {
         <Select options={[{ value: 'Active' }, { value: 'Inactive' }, { value: 'Completed' }]} />
       </Form.Item>
       <Form.Item name="batch" label="Batch">
-        <Input placeholder="Batch Graphic A" />
+        <Select
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          placeholder="Search and select batch"
+          options={batchOptions.map((batch) => ({
+            value: batch,
+            label: batch
+          }))}
+        />
       </Form.Item>
       <Form.Item name="address" label="Address" className="grid-span-2">
         <Input.TextArea rows={3} placeholder="Enter address" />

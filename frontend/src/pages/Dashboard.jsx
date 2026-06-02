@@ -1,4 +1,4 @@
-import { Button, Card, Grid, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Grid, Table, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiAward, FiCalendar, FiCheckCircle, FiCreditCard, FiPlus, FiUsers } from 'react-icons/fi';
@@ -55,7 +55,7 @@ export default function Dashboard() {
       )
     },
     { title: 'Batch', dataIndex: 'batch' },
-    { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={status === 'Active' ? 'green' : 'default'}>{status}</Tag> },
+    { title: 'Status', dataIndex: 'status', render: (status) => <span>{status}</span> },
     { title: 'Enrolled', dataIndex: 'enrolledDate', render: (date) => dayjs(date).format('DD MMM YYYY') },
     { title: 'Actions', render: (_, row) => <Button onClick={() => openStudentDetails(row._id)}>View</Button> }
   ];
