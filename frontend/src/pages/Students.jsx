@@ -3,6 +3,7 @@ import {
   Card,
   Drawer,
   Form,
+  Grid,
   Input,
   Popconfirm,
   Select,
@@ -42,6 +43,12 @@ export default function Students() {
   const [batchOptions, setBatchOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const openStudentDetails = (studentId) => {
+    navigate(`/admin/students/${studentId}`);
+  };
 
   const [filters, setFilters] = useState({
     search: '',
@@ -152,10 +159,16 @@ export default function Students() {
       dataIndex: 'name',
       width: 240,
       render: (text, row) => (
-        <div className="student-cell">
-          <strong>{text}</strong>
-          <span className="muted-text">{row.regNo}</span>
-        </div>
+        <Button
+          type="link"
+          className="table-student-link"
+          onClick={() => openStudentDetails(row._id)}
+        >
+          <span className="student-cell">
+            <strong>{text}</strong>
+            <span className="muted-text">{row.regNo}</span>
+          </span>
+        </Button>
       )
     },
     {
@@ -199,7 +212,7 @@ export default function Students() {
         <Space>
           <Button
             icon={<FiEye />}
-            onClick={() => navigate(`/admin/students/${row._id}`)}
+            onClick={() => openStudentDetails(row._id)}
           >
             View
           </Button>
@@ -214,6 +227,30 @@ export default function Students() {
           </Popconfirm>
         </Space>
       )
+    }
+  ];
+
+  const mobileColumns = [
+    {
+      title: 'Student',
+      dataIndex: 'name',
+      render: (text, row) => (
+        <Button
+          type="link"
+          className="table-student-link mobile-student-name-link"
+          onClick={() => openStudentDetails(row._id)}
+        >
+          <span className="student-cell">
+            <strong>{text}</strong>
+            <span className="muted-text">{row.regNo}</span>
+          </span>
+        </Button>
+      )
+    },
+    {
+      title: 'Batch',
+      dataIndex: 'batch',
+      ellipsis: true
     }
   ];
 
@@ -274,13 +311,13 @@ export default function Students() {
 
         <Table
           rowKey="_id"
-          columns={columns}
+          columns={isMobile ? mobileColumns : columns}
           dataSource={filteredStudents}
           loading={loading}
-          scroll={{ x: 1045 }}
+          scroll={isMobile ? undefined : { x: 1045 }}
           tableLayout="fixed"
-          size="middle"
-          className="students-table"
+          size={isMobile ? 'small' : 'middle'}
+          className="students-table mobile-focused-table"
         />
       </Card>
 
@@ -303,3 +340,4 @@ export default function Students() {
     </div>
   );
 }
+  

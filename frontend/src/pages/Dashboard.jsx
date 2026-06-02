@@ -1,4 +1,4 @@
-import { Button, Card, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Grid, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiAward, FiCalendar, FiCheckCircle, FiCreditCard, FiMail, FiPlus, FiUsers } from 'react-icons/fi';
@@ -13,6 +13,12 @@ export default function Dashboard() {
   const [metrics, setMetrics] = useState({});
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const openStudentDetails = (studentId) => {
+    navigate(`/admin/students/${studentId}`);
+  };
 
   const load = async () => {
     try {
@@ -34,11 +40,44 @@ export default function Dashboard() {
 
   const columns = [
     { title: 'Reg No.', dataIndex: 'regNo' },
-    { title: 'Name', dataIndex: 'name', render: (text, row) => <Button type="link" onClick={() => navigate(`/admin/students/${row._id}`)}>{text}</Button> },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      render: (text, row) => (
+        <Button
+          type="link"
+          className="table-student-link"
+          onClick={() => openStudentDetails(row._id)}
+        >
+          {text}
+        </Button>
+      )
+    },
     { title: 'Batch', dataIndex: 'batch' },
     { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={status === 'Active' ? 'green' : 'default'}>{status}</Tag> },
     { title: 'Enrolled', dataIndex: 'enrolledDate', render: (date) => dayjs(date).format('DD MMM YYYY') },
-    { title: 'Actions', render: (_, row) => <Button onClick={() => navigate(`/admin/students/${row._id}`)}>View</Button> }
+    { title: 'Actions', render: (_, row) => <Button onClick={() => openStudentDetails(row._id)}>View</Button> }
+  ];
+
+  const mobileColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      render: (text, row) => (
+        <Button
+          type="link"
+          className="table-student-link mobile-student-name-link"
+          onClick={() => openStudentDetails(row._id)}
+        >
+          {text}
+        </Button>
+      )
+    },
+    {
+      title: 'Batch',
+      dataIndex: 'batch',
+      ellipsis: true
+    }
   ];
 
   return (
@@ -74,7 +113,17 @@ export default function Dashboard() {
           <Typography.Title level={4}>Recently Enrolled Students</Typography.Title>
           <Button onClick={() => navigate('/admin/students')}>View All</Button>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={students} loading={loading} pagination={false} scroll={{ x: 760 }} />
+        <Table
+          rowKey="_id"
+          columns={isMobile ? mobileColumns : columns}
+          dataSource={students}
+          loading={loading}
+          pagination={false}
+          scroll={isMobile ? undefined : { x: 760 }}
+          tableLayout="fixed"
+          size={isMobile ? 'small' : 'middle'}
+          className="dashboard-recent-table mobile-focused-table"
+        />
       </Card>
     </div>
   );

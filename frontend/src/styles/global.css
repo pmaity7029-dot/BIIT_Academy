@@ -1126,3 +1126,80 @@ a { color: inherit; text-decoration: none; }
     padding: 11px 12px !important;
   }
 }
+
+/* Mobile-focused student tables */
+.table-student-link.ant-btn-link {
+  height: auto !important;
+  max-width: 100%;
+  padding: 0;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+}
+
+.table-student-link .student-cell {
+  color: var(--text);
+}
+
+.mobile-focused-table .ant-table-cell {
+  vertical-align: middle;
+}
+
+.attendance-status-select {
+  width: 140px;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .mobile-focused-table .ant-table-thead > tr > th,
+  .mobile-focused-table .ant-table-tbody > tr > td {
+    padding: 10px 8px !important;
+  }
+
+  .mobile-focused-table .ant-table-thead > tr > th {
+    font-size: 12px;
+  }
+
+  .mobile-focused-table .ant-table-tbody > tr > td {
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .mobile-student-name-link.ant-btn-link {
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  .mobile-focused-table .student-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .mobile-focused-table .student-cell strong,
+  .mobile-focused-table .muted-text,
+  .mobile-focused-table .ant-table-cell {
+    overflow-wrap: anywhere;
+  }
+
+  .attendance-status-select {
+    width: 100% !important;
+    min-width: 96px;
+  }
+
+  .mobile-performance-rate {
+    min-width: 82px;
+    gap: 6px;
+  }
+
+  .mobile-performance-rate .performance-progress {
+    min-width: 42px;
+  }
+
+  .fee-paid-tag {
+    font-size: 11px;
+    padding-inline: 5px;
+  }
+}
+

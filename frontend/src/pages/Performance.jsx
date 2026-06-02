@@ -1,5 +1,6 @@
-import { Button, Card, Input, Progress, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Grid, Input, Progress, Select, Space, Table, Tag, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiBarChart2, FiSearch } from 'react-icons/fi';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
@@ -13,8 +14,17 @@ const sortOptions = [
 ];
 
 export default function Performance() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
+  const openStudentDetails = (studentId) => {
+    if (studentId) {
+      navigate(`/admin/students/${studentId}`);
+    }
+  };
 
   const [filters, setFilters] = useState({
     search: '',
@@ -113,10 +123,16 @@ export default function Performance() {
       dataIndex: ['student', 'name'],
       width: 210,
       render: (text, row) => (
-        <div className="student-cell">
-          <strong>{text}</strong>
-          <span className="muted-text">{row.student?.regNo}</span>
-        </div>
+        <Button
+          type="link"
+          className="table-student-link"
+          onClick={() => openStudentDetails(row.student?._id)}
+        >
+          <span className="student-cell">
+            <strong>{text}</strong>
+            <span className="muted-text">{row.student?.regNo}</span>
+          </span>
+        </Button>
       )
     },
     {
@@ -164,6 +180,50 @@ export default function Performance() {
       title: 'Fee Paid',
       dataIndex: 'paid',
       width: 125,
+      render: (value) => (
+        <Tag color="green" className="fee-paid-tag">
+          INR {Number(value || 0).toLocaleString('en-IN')}
+        </Tag>
+      )
+    }
+  ];
+
+  const mobileColumns = [
+    {
+      title: 'Name',
+      dataIndex: ['student', 'name'],
+      render: (text, row) => (
+        <Button
+          type="link"
+          className="table-student-link mobile-student-name-link"
+          onClick={() => openStudentDetails(row.student?._id)}
+        >
+          {text}
+        </Button>
+      )
+    },
+    {
+      title: 'Attendance',
+      dataIndex: 'attendanceRate',
+      render: (value) => {
+        const percent = Number(value || 0);
+
+        return (
+          <div className="performance-rate-cell mobile-performance-rate">
+            <Progress
+              percent={percent}
+              size="small"
+              showInfo={false}
+              className="performance-progress"
+            />
+            <span className="performance-percent">{percent}%</span>
+          </div>
+        );
+      }
+    },
+    {
+      title: 'Fee Paid',
+      dataIndex: 'paid',
       render: (value) => (
         <Tag color="green" className="fee-paid-tag">
           INR {Number(value || 0).toLocaleString('en-IN')}
@@ -234,13 +294,13 @@ export default function Performance() {
 
         <Table
           rowKey={(row) => row.student?._id}
-          columns={columns}
+          columns={isMobile ? mobileColumns : columns}
           dataSource={filteredRows}
           loading={loading}
-          scroll={{ x: 985 }}
+          scroll={isMobile ? undefined : { x: 985 }}
           tableLayout="fixed"
-          size="middle"
-          className="performance-table"
+          size={isMobile ? 'small' : 'middle'}
+          className="performance-table mobile-focused-table"
         />
       </Card>
     </div>
