@@ -1072,6 +1072,28 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+
+.compact-course-table .admin-table-wrap-text,
+.compact-course-table .course-title-wrap,
+.course-batch-table .batch-course-name {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.compact-course-table .course-title-wrap {
+  font-weight: 700;
+  color: #102a43;
+}
+
+.compact-course-table .ant-space,
+.course-batch-table .ant-space {
+  flex-wrap: nowrap;
+}
+
 /* Courses table overlap fix */
 .compact-course-table .ant-table {
   width: 100%;
@@ -1489,5 +1511,35 @@ a { color: inherit; text-decoration: none; }
 
   .shimmer-detail-field {
     border-right: 0;
+  }
+}
+
+
+/* Courses & batches edit/search refinements */
+.live-search-input .ant-input,
+.live-search-input .ant-input-search-button {
+  min-height: 23px;
+}
+
+.compact-course-table .course-title-wrap,
+.compact-course-table .admin-table-wrap-text,
+.course-batch-table .batch-course-name,
+.course-batch-table .batch-table-text {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.compact-course-table .ant-table-tbody > tr > td,
+.course-batch-table .ant-table-tbody > tr > td {
+  vertical-align: top;
+}
+
+@media (max-width: 768px) {
+  .section-toolbar .live-search-input,
+  .section-toolbar .live-search-input .ant-input-group-wrapper,
+  .section-toolbar .live-search-input .ant-input-wrapper {
+    width: 100% !important;
   }
 }

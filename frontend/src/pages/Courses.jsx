@@ -15,7 +15,7 @@ import {
   message,
 } from "antd";
 import { useEffect, useState } from "react";
-import { FiBookOpen, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
+import { FiBookOpen, FiEdit2, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
 import dayjs from "dayjs";
 import api from "../api/client.js";
 import PageHeader from "../components/PageHeader.jsx";
@@ -40,6 +40,11 @@ const statusColor = (status) => {
   return "default";
 };
 
+const toDayjs = (date) => (date ? dayjs(date) : null);
+
+const getBatchCourseName = (batch) =>
+  batch?.course?.title || batch?.courseName || "Not linked";
+
 export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
@@ -54,6 +59,10 @@ export default function Courses() {
   const [batchForm] = Form.useForm();
   const [courseOpen, setCourseOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [editingBatch, setEditingBatch] = useState(null);
+  const [savingCourse, setSavingCourse] = useState(false);
+  const [savingBatch, setSavingBatch] = useState(false);
 
   const loadCourses = async (nextFilters = courseFilters) => {
     setLoadingCourses(true);
@@ -85,37 +94,112 @@ export default function Courses() {
     load().catch(() => message.error("Unable to load courses and batches"));
   }, []);
 
+  const openNewCourse = () => {
+    setEditingCourse(null);
+    courseForm.resetFields();
+    courseForm.setFieldsValue({ status: "Active" });
+    setCourseOpen(true);
+  };
+
+  const openEditCourse = (course) => {
+    setEditingCourse(course);
+    courseForm.setFieldsValue({
+      title: course.title,
+      category: course.category,
+      duration: course.duration,
+      fee: course.fee,
+      status: course.status || "Active",
+      description: course.description,
+    });
+    setCourseOpen(true);
+  };
+
+  const closeCourseModal = () => {
+    setCourseOpen(false);
+    setEditingCourse(null);
+    courseForm.resetFields();
+  };
+
+  const openNewBatch = () => {
+    setEditingBatch(null);
+    batchForm.resetFields();
+    batchForm.setFieldsValue({ status: "Active" });
+    setBatchOpen(true);
+  };
+
+  const openEditBatch = (batch) => {
+    setEditingBatch(batch);
+    batchForm.setFieldsValue({
+      name: batch.name,
+      course: batch.course?._id || batch.course || undefined,
+      schedule: batch.schedule,
+      startDate: toDayjs(batch.startDate),
+      endDate: toDayjs(batch.endDate),
+      status: batch.status || "Active",
+    });
+    setBatchOpen(true);
+  };
+
+  const closeBatchModal = () => {
+    setBatchOpen(false);
+    setEditingBatch(null);
+    batchForm.resetFields();
+  };
+
   const saveCourse = async () => {
     try {
       const values = await courseForm.validateFields();
-      await api.post("/courses", values);
-      message.success("Course added");
-      setCourseOpen(false);
-      courseForm.resetFields();
+      setSavingCourse(true);
+
+      if (editingCourse?._id) {
+        await api.put(`/courses/${editingCourse._id}`, values);
+        message.success("Course updated");
+      } else {
+        await api.post("/courses", values);
+        message.success("Course added");
+      }
+
+      closeCourseModal();
       loadCourses();
+      loadBatches();
     } catch (error) {
       if (!error.errorFields) message.error("Course save failed");
+    } finally {
+      setSavingCourse(false);
     }
   };
 
   const saveBatch = async () => {
     try {
       const values = await batchForm.validateFields();
+      setSavingBatch(true);
+
       const selectedCourse = courses.find(
         (course) => course._id === values.course,
       );
-      await api.post("/courses/batches", {
+
+      const payload = {
         ...values,
-        courseName: selectedCourse?.title,
-        startDate: values.startDate?.toISOString(),
-        endDate: values.endDate?.toISOString(),
-      });
-      message.success("Batch added");
-      setBatchOpen(false);
-      batchForm.resetFields();
+        course: values.course || null,
+        courseName: selectedCourse?.title || editingBatch?.courseName || "",
+        startDate: values.startDate ? values.startDate.toISOString() : null,
+        endDate: values.endDate ? values.endDate.toISOString() : null,
+      };
+
+      if (editingBatch?._id) {
+        await api.put(`/courses/batches/${editingBatch._id}`, payload);
+        message.success("Batch updated");
+      } else {
+        await api.post("/courses/batches", payload);
+        message.success("Batch added");
+      }
+
+      closeBatchModal();
       loadBatches();
     } catch (error) {
       if (!error.errorFields) message.error("Batch save failed");
+    } finally {
+      setSavingBatch(false);
     }
   };
 
@@ -170,6 +254,7 @@ export default function Courses() {
       await api.delete(`/courses/${course._id}`);
       message.success("Course deleted");
       loadCourses();
+      loadBatches();
     } catch (error) {
       message.error(error?.response?.data?.message || "Course delete failed");
     }
@@ -185,99 +270,102 @@ export default function Courses() {
     }
   };
 
-const courseColumns = [
-  {
-    title: "Course",
-    dataIndex: "title",
-    width: 260,
-    render: (text) => (
-      <div className="admin-table-wrap-text" title={text}>
-        {text || "Not set"}
-      </div>
-    ),
-  },
-  {
-    title: "Category",
-    dataIndex: "category",
-    width: 170,
-    render: (text) => (
-      <div className="admin-table-wrap-text" title={text}>
-        {text || "Not set"}
-      </div>
-    ),
-  },
-  {
-    title: "Duration",
-    dataIndex: "duration",
-    width: 160,
-    render: (text) => (
-      <div className="admin-table-wrap-text" title={text}>
-        {text || "Not set"}
-      </div>
-    ),
-  },
-  {
-    title: "Fee",
-    dataIndex: "fee",
-    width: 130,
-    render: (value) => (
-      <span className="admin-table-nowrap">
-        INR {Number(value || 0).toLocaleString("en-IN")}
-      </span>
-    ),
-  },
-  {
-    title: "Status",
-    dataIndex: "status",
-    width: 155,
-    render: (status, row) => (
-      <Select
-        value={status}
-        size="small"
-        style={{ width: 125 }}
-        onChange={(value) => updateCourseStatus(row, value)}
-        options={courseStatusOptions}
-      />
-    ),
-  },
-  {
-    title: "Delete",
-    width: 80,
-    align: "center",
-    render: (_, row) => (
-      <Popconfirm
-        title="Delete this course?"
-        okText="Delete"
-        okButtonProps={{ danger: true }}
-        onConfirm={() => deleteCourse(row)}
-      >
-        <Button danger icon={<FiTrash2 />} />
-      </Popconfirm>
-    ),
-  },
-];
+  const courseColumns = [
+    {
+      title: "Course",
+      dataIndex: "title",
+      width: 280,
+      render: (text) => (
+        <div className="admin-table-wrap-text course-title-wrap" title={text}>
+          {text || "Not set"}
+        </div>
+      ),
+    },
+    {
+      title: "Category",
+      dataIndex: "category",
+      width: 170,
+      render: (text) => (
+        <div className="admin-table-wrap-text" title={text}>
+          {text || "Not set"}
+        </div>
+      ),
+    },
+    {
+      title: "Duration",
+      dataIndex: "duration",
+      width: 160,
+      render: (text) => (
+        <div className="admin-table-wrap-text" title={text}>
+          {text || "Not set"}
+        </div>
+      ),
+    },
+    {
+      title: "Fee",
+      dataIndex: "fee",
+      width: 130,
+      render: (value) => (
+        <span className="admin-table-nowrap">
+          INR {Number(value || 0).toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      width: 155,
+      render: (status, row) => (
+        <Select
+          value={status}
+          size="small"
+          style={{ width: 125 }}
+          onChange={(value) => updateCourseStatus(row, value)}
+          options={courseStatusOptions}
+        />
+      ),
+    },
+    {
+      title: "Actions",
+      width: 125,
+      align: "center",
+      render: (_, row) => (
+        <Space size="small">
+          <Button icon={<FiEdit2 />} onClick={() => openEditCourse(row)}>
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete this course?"
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => deleteCourse(row)}
+          >
+            <Button danger icon={<FiTrash2 />} />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   const batchColumns = [
     {
       title: "Batch",
       dataIndex: "name",
-      width: 150,
+      width: 170,
       render: (text) => (
         <div className="batch-table-text" title={text}>
           {text || "Not set"}
         </div>
       ),
     },
-
-    
     {
       title: "Course",
-      width: 150,
+      width: 220,
       render: (_, row) => {
-        const courseName = row.course?.title || row.courseName || "Not linked";
+        const courseName = getBatchCourseName(row);
 
         return (
-          <div className="batch-table-text" title={courseName}>
+          <div className="batch-table-text batch-course-name" title={courseName}>
             {courseName}
           </div>
         );
@@ -286,7 +374,7 @@ const courseColumns = [
     {
       title: "Schedule",
       dataIndex: "schedule",
-      width: 190,
+      width: 210,
       render: (text) => (
         <div className="batch-table-text schedule-text" title={text}>
           {text || "Not set"}
@@ -306,30 +394,35 @@ const courseColumns = [
     {
       title: "Status",
       dataIndex: "status",
-      width: 105,
+      width: 155,
       render: (status, row) => (
         <Select
           value={status}
           size="small"
-          style={{ width: 145 }}
+          style={{ width: 125 }}
           onChange={(value) => updateBatchStatus(row, value)}
           options={batchStatusOptions}
         />
       ),
     },
     {
-      title: "Delete",
-      width: 90,
+      title: "Actions",
+      width: 125,
       align: "center",
       render: (_, row) => (
-        <Popconfirm
-          title="Delete this batch?"
-          okText="Delete"
-          okButtonProps={{ danger: true }}
-          onConfirm={() => deleteBatch(row)}
-        >
-          <Button danger icon={<FiTrash2 />} />
-        </Popconfirm>
+        <Space size="small">
+          <Button icon={<FiEdit2 />} onClick={() => openEditBatch(row)}>
+            Edit
+          </Button>
+          <Popconfirm
+            title="Delete this batch?"
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => deleteBatch(row)}
+          >
+            <Button danger icon={<FiTrash2 />} />
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
@@ -344,9 +437,10 @@ const courseColumns = [
           placeholder="Search batch, course..."
           value={batchFilters.search}
           onChange={(event) =>
-            setBatchFilters((prev) => ({ ...prev, search: event.target.value }))
+            applyBatchFilters({ search: event.target.value })
           }
           onSearch={(value) => applyBatchFilters({ search: value })}
+          className="live-search-input"
           style={{ width: 300 }}
         />
         <Select
@@ -366,7 +460,7 @@ const courseColumns = [
         <Button
           type="primary"
           icon={<FiPlus />}
-          onClick={() => setBatchOpen(true)}
+          onClick={openNewBatch}
         >
           Add Batch
         </Button>
@@ -384,12 +478,10 @@ const courseColumns = [
           placeholder="Search course, category..."
           value={courseFilters.search}
           onChange={(event) =>
-            setCourseFilters((prev) => ({
-              ...prev,
-              search: event.target.value,
-            }))
+            applyCourseFilters({ search: event.target.value })
           }
           onSearch={(value) => applyCourseFilters({ search: value })}
+          className="live-search-input"
           style={{ width: 300 }}
         />
         <Select
@@ -409,7 +501,7 @@ const courseColumns = [
         <Button
           type="primary"
           icon={<FiPlus />}
-          onClick={() => setCourseOpen(true)}
+          onClick={openNewCourse}
         >
           Add Course
         </Button>
@@ -422,7 +514,7 @@ const courseColumns = [
       <PageHeader
         icon={<FiBookOpen />}
         title="Batches & Courses"
-        subtitle="Search, filter, change status, and manage course catalog"
+        subtitle="Search, filter, edit, change status, and manage course catalog"
       />
       <Card className="content-card" bordered={false}>
         <Tabs
@@ -440,7 +532,7 @@ const courseColumns = [
                       rowKey="_id"
                       columns={batchColumns}
                       dataSource={batches}
-                      scroll={{ x: 1240 }}
+                      scroll={{ x: 1110 }}
                       tableLayout="fixed"
                       size="middle"
                       className="course-batch-table"
@@ -462,7 +554,7 @@ const courseColumns = [
                       rowKey="_id"
                       columns={courseColumns}
                       dataSource={courses}
-                      scroll={{ x: 1080 }}
+                      scroll={{ x: 1025 }}
                       tableLayout="fixed"
                       size="middle"
                       className="course-list-table compact-course-table"
@@ -476,11 +568,13 @@ const courseColumns = [
       </Card>
 
       <Modal
-        title="Add Course"
+        title={editingCourse ? "Edit Course" : "Add Course"}
         open={courseOpen}
-        onCancel={() => setCourseOpen(false)}
+        onCancel={closeCourseModal}
         onOk={saveCourse}
-        okText="Save Course"
+        okText={editingCourse ? "Update Course" : "Save Course"}
+        confirmLoading={savingCourse}
+        destroyOnClose
       >
         <Form
           form={courseForm}
@@ -504,7 +598,7 @@ const courseColumns = [
           >
             <Input placeholder="6 Months" />
           </Form.Item>
-          <Form.Item name="fee" label="Fee" rules={[{ required: true }]}>
+          <Form.Item name="fee" label="Fee" rules={[{ required: true }]}> 
             <InputNumber className="full-width" min={0} />
           </Form.Item>
           <Form.Item name="status" label="Status">
@@ -517,11 +611,13 @@ const courseColumns = [
       </Modal>
 
       <Modal
-        title="Add Batch"
+        title={editingBatch ? "Edit Batch" : "Add Batch"}
         open={batchOpen}
-        onCancel={() => setBatchOpen(false)}
+        onCancel={closeBatchModal}
         onOk={saveBatch}
-        okText="Save Batch"
+        okText={editingBatch ? "Update Batch" : "Save Batch"}
+        confirmLoading={savingBatch}
+        destroyOnClose
       >
         <Form
           form={batchForm}
@@ -537,6 +633,7 @@ const courseColumns = [
           </Form.Item>
           <Form.Item name="course" label="Course">
             <Select
+              allowClear
               showSearch
               optionFilterProp="label"
               options={courses.map((course) => ({
