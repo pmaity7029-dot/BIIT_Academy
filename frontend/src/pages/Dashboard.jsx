@@ -1,7 +1,7 @@
 import { Button, Card, Grid, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiAward, FiCalendar, FiCheckCircle, FiCreditCard, FiMail, FiPlus, FiUsers } from 'react-icons/fi';
+import { FiAward, FiCalendar, FiCheckCircle, FiCreditCard, FiPlus, FiUsers } from 'react-icons/fi';
 import api from '../api/client.js';
 import MetricCard from '../components/MetricCard.jsx';
 import PageHeader from '../components/PageHeader.jsx';
@@ -91,13 +91,12 @@ export default function Dashboard() {
         onAction={() => navigate('/admin/students')}
       />
 
-      <div className="metric-grid">
+      <div className="metric-grid dashboard-metric-grid">
         <MetricCard title="Total Students" value={metrics.totalStudents || 0} icon={<FiUsers />} />
         <MetricCard title="Active Students" value={metrics.activeStudents || 0} icon={<FiCheckCircle />} />
         <MetricCard title="Present Today" value={metrics.presentToday || 0} icon={<FiCalendar />} />
         <MetricCard title="Revenue" value={metrics.monthlyRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
         <MetricCard title="Certs Issued" value={metrics.certificatesIssued || 0} icon={<FiAward />} />
-        <MetricCard title="Unread Messages" value={metrics.unreadMessages || 0} icon={<FiMail />} />
       </div>
 
       <Card className="content-card" bordered={false}>

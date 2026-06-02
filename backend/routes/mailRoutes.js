@@ -8,40 +8,115 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.use(protect);
 
+const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
+
+const validStudentStatuses = ['Active', 'Inactive', 'Completed'];
+
+const normalizeStudentStatus = (status) => {
+  if (!status) return '';
+
+  return validStudentStatuses.find(
+    (item) => item.toLowerCase() === String(status).trim().toLowerCase()
+  ) || '';
+};
+
+const normalizeEmails = (emails = []) => {
+  const list = Array.isArray(emails) ? emails : String(emails || '').split(',');
+
+  return [...new Set(
+    list
+      .map((email) => String(email || '').trim().toLowerCase())
+      .filter(Boolean)
+  )];
+};
+
+const getStudentRecipients = async ({ batch = '', status = '' } = {}) => {
+  const query = { email: { $exists: true, $ne: '' } };
+  const cleanBatch = String(batch || '').trim();
+  const cleanStatus = normalizeStudentStatus(status);
+
+  if (cleanBatch) {
+    query.batch = buildRegex(cleanBatch);
+  }
+
+  if (cleanStatus) {
+    query.status = cleanStatus;
+  }
+
+  const students = await Student.find(query).select('email');
+  return normalizeEmails(students.map((student) => student.email));
+};
+
 router.get('/', asyncHandler(async (req, res) => {
   res.json(await MailLog.find().populate('sentBy', 'name').sort({ createdAt: -1 }));
 }));
 
 router.post('/send', asyncHandler(async (req, res) => {
-  const { recipientType, emails = [], subject, body } = req.body;
-  let recipients = emails;
+  const {
+    recipientType = 'manual',
+    emails = [],
+    subject = '',
+    body = '',
+    batch = '',
+    status = ''
+  } = req.body;
 
-  if (recipientType === 'all-students') {
-    const students = await Student.find({ email: { $exists: true, $ne: '' } });
-    recipients = students.map((student) => student.email);
+  if (!String(subject).trim()) {
+    res.status(400);
+    throw new Error('Subject is required.');
   }
 
-  recipients = [...new Set(recipients.filter(Boolean))];
+  if (!String(body).trim()) {
+    res.status(400);
+    throw new Error('Message body is required.');
+  }
+
+  if (status && !normalizeStudentStatus(status)) {
+    res.status(400);
+    throw new Error('Invalid student status filter.');
+  }
+
+  let recipients = [];
+
+  if (recipientType === 'all-students') {
+    recipients = await getStudentRecipients();
+  } else if (recipientType === 'filtered-students') {
+    if (!String(batch || '').trim() && !String(status || '').trim()) {
+      res.status(400);
+      throw new Error('Select at least one filter: batch or student status.');
+    }
+
+    recipients = await getStudentRecipients({ batch, status });
+  } else {
+    recipients = normalizeEmails(emails);
+  }
 
   if (!recipients.length) {
     res.status(400);
-    throw new Error('At least one recipient email is required.');
+    throw new Error('No student email matched the selected recipient option.');
   }
 
-  let status = 'Sent';
+  let sendStatus = 'Sent';
   try {
     const result = await sendMail({
       to: recipients.join(','),
-      subject,
+      subject: String(subject).trim(),
       text: body,
-      html: body.replaceAll('\n', '<br />')
+      html: String(body).replaceAll('\n', '<br />')
     });
-    if (result?.skipped) status = 'Skipped';
+    if (result?.skipped) sendStatus = 'Skipped';
   } catch (error) {
-    status = 'Failed';
+    sendStatus = 'Failed';
   }
 
-  const log = await MailLog.create({ recipients, subject, body, status, sentBy: req.user._id });
+  const log = await MailLog.create({
+    recipients,
+    subject: String(subject).trim(),
+    body,
+    status: sendStatus,
+    sentBy: req.user._id
+  });
+
   res.status(201).json(log);
 }));
 
