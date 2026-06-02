@@ -30,9 +30,6 @@ export default function StudentForm({ form }) {
       <Form.Item name="status" label="Status" initialValue="Active">
         <Select options={[{ value: 'Active' }, { value: 'Inactive' }, { value: 'Completed' }]} />
       </Form.Item>
-      <Form.Item name="centre" label="Centre">
-        <Input placeholder="BIIT - Main Branch" />
-      </Form.Item>
       <Form.Item name="batch" label="Batch">
         <Input placeholder="Batch Graphic A" />
       </Form.Item>

@@ -27,7 +27,6 @@ router.get('/overview', asyncHandler(async (req, res) => {
       { regNo: regex },
       { phone: regex },
       { email: regex },
-      { centre: regex },
       { batch: regex }
     ];
   }

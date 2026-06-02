@@ -193,7 +193,6 @@ export default function Payments() {
         </div>
       ),
     },
-    { title: "Centre", dataIndex: ["student", "centre"], width: 170 },
     {
       title: "Amount",
       dataIndex: "amount",
@@ -275,7 +274,6 @@ export default function Payments() {
               <div className="receipt-logo">BIIT</div>
               <div>
                 <h2>BIIT Coaching</h2>
-                <p>BIIT - Main Branch</p>
                 <p>Midnapore, West Bengal</p>
               </div>
             </div>

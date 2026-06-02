@@ -130,7 +130,6 @@ router.get(
         record.student?.phone,
         record.student?.email,
         record.student?.batch,
-        record.student?.centre,
         record.status,
         record.notes
       ]

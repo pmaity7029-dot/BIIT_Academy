@@ -36,7 +36,6 @@ const run = async () => {
       name: 'Batch Graphic A',
       course: course._id,
       courseName: course.title,
-      centre: 'BIIT - Main Branch',
       schedule: 'Mon to Fri, 10:00 AM - 12:00 PM',
       status: 'Running'
     });

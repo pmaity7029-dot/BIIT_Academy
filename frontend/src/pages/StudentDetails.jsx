@@ -56,14 +56,14 @@ export default function StudentDetails() {
 
   return (
     <div>
-      <PageHeader icon={<FiUser />} title={student.name} subtitle={`${student.regNo} - ${student.centre} - ${student.batch}`} />
+      <PageHeader icon={<FiUser />} title={student.name} subtitle={`${student.regNo} - ${student.batch}`} />
 
       <Card className="content-card profile-card" bordered={false}>
         <div className="profile-top">
           <div className="profile-avatar">{student.name?.slice(0, 2)?.toUpperCase()}</div>
           <div>
             <h2>{student.name}</h2>
-            <p>{student.regNo} - {student.centre} - {student.batch}</p>
+            <p>{student.regNo} - {student.batch}</p>
           </div>
           <Tag color={student.status === 'Active' ? 'green' : student.status === 'Completed' ? 'blue' : 'default'}>{student.status}</Tag>
         </div>

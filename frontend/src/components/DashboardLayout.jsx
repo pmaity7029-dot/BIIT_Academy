@@ -1,4 +1,4 @@
-import { Avatar, Button, Drawer, Grid, Layout, Menu, Select, Typography } from 'antd';
+import { Avatar, Button, Drawer, Grid, Layout, Menu, Typography } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import {
@@ -167,15 +167,6 @@ export default function DashboardLayout() {
             <Typography.Title level={4} className="header-title">
               {pageTitle(location.pathname)}
             </Typography.Title>
-
-            <Select
-              defaultValue="All Centres"
-              className="centre-select"
-              options={[
-                { value: 'All Centres', label: 'All Centres' },
-                { value: 'BIIT - Main Branch', label: 'BIIT - Main Branch' }
-              ]}
-            />
           </div>
 
           <div className="header-actions">

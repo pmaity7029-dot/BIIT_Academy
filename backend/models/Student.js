@@ -11,7 +11,6 @@ const studentSchema = new mongoose.Schema(
     emergencyContact: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true },
     address: { type: String, trim: true },
-    centre: { type: String, default: 'BIIT - Main Branch', trim: true },
     batch: { type: String, default: 'Default Batch', trim: true },
     enrolledDate: { type: Date, default: Date.now },
     status: { type: String, enum: ['Active', 'Inactive', 'Completed'], default: 'Active' },

@@ -27,7 +27,7 @@ export default function Website() {
           </Typography.Paragraph>
           <div className="hero-actions">
             <Button type="primary" size="large" icon={<FiArrowRight />}>Explore Courses</Button>
-            <Button size="large" icon={<FiPhone />}>Contact Centre</Button>
+            <Button size="large" icon={<FiPhone />}>Contact Us</Button>
           </div>
         </div>
         <Card className="hero-card" bordered={false}>
@@ -76,7 +76,7 @@ export default function Website() {
       <footer id="contact" className="site-footer">
         <div>
           <strong>BIIT</strong>
-          <p>Main Branch, Midnapore, West Bengal</p>
+          <p>Midnapore, West Bengal</p>
         </div>
         <Button type="primary" onClick={() => navigate('/admin')}>Go to Admin Panel</Button>
       </footer>

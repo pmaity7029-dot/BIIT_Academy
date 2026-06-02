@@ -340,7 +340,7 @@ const courseColumns = [
         <Input.Search
           allowClear
           enterButton={<FiSearch />}
-          placeholder="Search batch, course, centre..."
+          placeholder="Search batch, course..."
           value={batchFilters.search}
           onChange={(event) =>
             setBatchFilters((prev) => ({ ...prev, search: event.target.value }))
@@ -537,9 +537,6 @@ const courseColumns = [
                 label: course.title,
               }))}
             />
-          </Form.Item>
-          <Form.Item name="centre" label="Centre">
-            <Input placeholder="BIIT - Main Branch" />
           </Form.Item>
           <Form.Item name="schedule" label="Schedule">
             <Input placeholder="Mon to Fri, 10 AM - 12 PM" />

@@ -70,7 +70,6 @@ export default function Performance() {
         student.regNo,
         student.phone,
         student.email,
-        student.centre,
         student.batch,
         row.present,
         row.late,

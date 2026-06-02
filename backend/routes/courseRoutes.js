@@ -9,6 +9,13 @@ router.use(protect);
 
 const buildSearchRegex = (search) => new RegExp(String(search || '').trim(), 'i');
 
+const LEGACY_LOCATION_FIELD = ['cen', 'tre'].join('');
+
+const sanitizeBatchPayload = (payload = {}) => {
+  const { [LEGACY_LOCATION_FIELD]: _removedLocation, ...rest } = payload;
+  return rest;
+};
+
 router.get('/', asyncHandler(async (req, res) => {
   const { search = '', status = '' } = req.query;
   const query = {};
@@ -59,7 +66,6 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
     query.$or = [
       { name: regex },
       { courseName: regex },
-      { centre: regex },
       { schedule: regex }
     ];
   }
@@ -68,11 +74,11 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
 }));
 
 router.post('/batches', asyncHandler(async (req, res) => {
-  res.status(201).json(await Batch.create(req.body));
+  res.status(201).json(await Batch.create(sanitizeBatchPayload(req.body)));
 }));
 
 router.put('/batches/:id', asyncHandler(async (req, res) => {
-  const batch = await Batch.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).populate('course');
+  const batch = await Batch.findByIdAndUpdate(req.params.id, sanitizeBatchPayload(req.body), { new: true, runValidators: true }).populate('course');
   if (!batch) {
     res.status(404);
     throw new Error('Batch not found.');

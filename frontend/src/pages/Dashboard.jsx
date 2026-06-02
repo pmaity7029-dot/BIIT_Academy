@@ -35,7 +35,6 @@ export default function Dashboard() {
   const columns = [
     { title: 'Reg No.', dataIndex: 'regNo' },
     { title: 'Name', dataIndex: 'name', render: (text, row) => <Button type="link" onClick={() => navigate(`/admin/students/${row._id}`)}>{text}</Button> },
-    { title: 'Centre', dataIndex: 'centre' },
     { title: 'Batch', dataIndex: 'batch' },
     { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={status === 'Active' ? 'green' : 'default'}>{status}</Tag> },
     { title: 'Enrolled', dataIndex: 'enrolledDate', render: (date) => dayjs(date).format('DD MMM YYYY') },
@@ -64,7 +63,7 @@ export default function Dashboard() {
 
       <Card className="content-card" bordered={false}>
         <div className="section-toolbar">
-          <Typography.Title level={4}>Today's Attendance by Centre</Typography.Title>
+          <Typography.Title level={4}>Today's Attendance</Typography.Title>
           <Button onClick={() => navigate('/admin/attendance')}>Mark Attendance</Button>
         </div>
         <Typography.Text type="secondary">Use the attendance section to mark daily status and filter records by date, month, or student.</Typography.Text>
@@ -75,7 +74,7 @@ export default function Dashboard() {
           <Typography.Title level={4}>Recently Enrolled Students</Typography.Title>
           <Button onClick={() => navigate('/admin/students')}>View All</Button>
         </div>
-        <Table rowKey="_id" columns={columns} dataSource={students} loading={loading} pagination={false} scroll={{ x: 900 }} />
+        <Table rowKey="_id" columns={columns} dataSource={students} loading={loading} pagination={false} scroll={{ x: 760 }} />
       </Card>
     </div>
   );

@@ -57,7 +57,6 @@ a { color: inherit; text-decoration: none; }
 .admin-header { height: 74px; background: #ffffff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 8; }
 .header-left { display: flex; align-items: center; gap: 22px; }
 .header-title.ant-typography { margin: 0; }
-.centre-select { min-width: 260px; }
 .header-actions { display: flex; align-items: center; gap: 14px; }
 .user-pill { display: flex; align-items: center; gap: 10px; background: #f5f7fb; border-radius: 999px; padding: 8px 14px 8px 8px; font-weight: 700; }
 .user-avatar { background: var(--primary); }
@@ -210,7 +209,6 @@ a { color: inherit; text-decoration: none; }
   .site-footer { flex-direction: column; align-items: flex-start; }
   .admin-content { padding: 22px; }
   .admin-header { padding: 0 16px; }
-  .centre-select { display: none; }
   .page-heading { align-items: flex-start; flex-direction: column; }
   .metric-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }

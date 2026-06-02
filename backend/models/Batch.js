@@ -5,7 +5,6 @@ const batchSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
     courseName: { type: String, trim: true },
-    centre: { type: String, default: 'BIIT - Main Branch', trim: true },
     schedule: { type: String, trim: true },
     startDate: Date,
     endDate: Date,

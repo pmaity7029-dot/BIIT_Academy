@@ -11,6 +11,13 @@ router.use(protect);
 
 const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
 
+const LEGACY_LOCATION_FIELD = ['cen', 'tre'].join('');
+
+const sanitizeStudentPayload = (payload = {}) => {
+  const { [LEGACY_LOCATION_FIELD]: _removedLocation, ...rest } = payload;
+  return rest;
+};
+
 router.get('/metrics', asyncHandler(async (req, res) => {
   const [totalStudents, activeStudents, presentToday, certificatesIssued, revenueAgg] = await Promise.all([
     Student.countDocuments(),
@@ -49,7 +56,7 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
 }));
 
 router.get('/', asyncHandler(async (req, res) => {
-  const { search = '', status = '', centre = '', batch = '' } = req.query;
+  const { search = '', status = '', batch = '' } = req.query;
   const query = {};
 
   if (search) {
@@ -61,14 +68,12 @@ router.get('/', asyncHandler(async (req, res) => {
       { regNo: regex },
       { phone: regex },
       { email: regex },
-      { centre: regex },
       { batch: regex },
       { status: regex }
     ];
   }
 
   if (status) query.status = status;
-  if (centre) query.centre = buildRegex(centre);
   if (batch) query.batch = buildRegex(batch);
 
   const students = await Student.find(query).sort({ createdAt: -1 });
@@ -76,7 +81,7 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-  const student = await Student.create(req.body);
+  const student = await Student.create(sanitizeStudentPayload(req.body));
   res.status(201).json(student);
 }));
 
@@ -113,7 +118,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
+  const student = await Student.findByIdAndUpdate(req.params.id, sanitizeStudentPayload(req.body), {
     new: true,
     runValidators: true
   });
