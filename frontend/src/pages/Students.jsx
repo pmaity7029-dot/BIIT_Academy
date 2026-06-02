@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
 import StudentForm from '../components/StudentForm.jsx';
+import { ShimmerTable } from '../components/ShimmerLoading.jsx';
 import React from 'react';
 
 const studentStatusOptions = ['Active', 'Inactive', 'Completed'].map((value) => ({ value }));
@@ -309,16 +310,19 @@ export default function Students() {
           </Space>
         </div>
 
-        <Table
-          rowKey="_id"
-          columns={isMobile ? mobileColumns : columns}
-          dataSource={filteredStudents}
-          loading={loading}
-          scroll={isMobile ? undefined : { x: 1045 }}
-          tableLayout="fixed"
-          size={isMobile ? 'small' : 'middle'}
-          className="students-table mobile-focused-table"
-        />
+        {loading ? (
+          <ShimmerTable columns={isMobile ? 2 : 6} rows={8} />
+        ) : (
+          <Table
+            rowKey="_id"
+            columns={isMobile ? mobileColumns : columns}
+            dataSource={filteredStudents}
+            scroll={isMobile ? undefined : { x: 1045 }}
+            tableLayout="fixed"
+            size={isMobile ? 'small' : 'middle'}
+            className="students-table mobile-focused-table"
+          />
+        )}
       </Card>
 
       <Drawer
@@ -340,4 +344,3 @@ export default function Students() {
     </div>
   );
 }
-  

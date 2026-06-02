@@ -1218,4 +1218,276 @@ a { color: inherit; text-decoration: none; }
   border-color: #d9d9d9 !important;
 }
 
+/* Shimmer / Skeleton loading UI */
+.shimmer-shell,
+.shimmer-detail-card,
+.shimmer-metric-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(20, 63, 117, 0.08);
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(20, 63, 117, 0.06);
+}
 
+.shimmer-line,
+.shimmer-avatar,
+.shimmer-metric-icon,
+.shimmer-stat-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: linear-gradient(90deg, #edf2f7 0%, #f8fafc 48%, #edf2f7 100%);
+  background-size: 220% 100%;
+  animation: biit-shimmer 1.25s ease-in-out infinite;
+}
+
+.shimmer-line::after,
+.shimmer-avatar::after,
+.shimmer-metric-icon::after,
+.shimmer-stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: translateX(-100%);
+  animation: biit-shine 1.45s ease-in-out infinite;
+}
+
+@keyframes biit-shimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@keyframes biit-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-table-shell {
+  width: 100%;
+  border-radius: 18px;
+}
+
+.shimmer-table-header,
+.shimmer-table-row {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+  min-width: 100%;
+  padding: 16px 18px;
+}
+
+.shimmer-table-header {
+  background: #f8fbff;
+}
+
+.shimmer-table-row {
+  border-top: 1px solid rgba(20, 63, 117, 0.07);
+}
+
+.shimmer-header-line {
+  width: 72%;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.shimmer-cell-line {
+  width: 62%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.shimmer-cell-line-wide {
+  width: 88%;
+}
+
+.shimmer-table-row:nth-child(odd) .shimmer-cell-line:nth-child(2n) {
+  width: 78%;
+}
+
+.shimmer-table-row:nth-child(even) .shimmer-cell-line:nth-child(3n) {
+  width: 48%;
+}
+
+.shimmer-metric-grid {
+  margin-bottom: 22px;
+}
+
+.shimmer-metric-card {
+  min-height: 132px;
+  border-radius: 22px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.shimmer-metric-title {
+  width: 120px;
+  height: 14px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+.shimmer-metric-value {
+  width: 82px;
+  height: 28px;
+  border-radius: 12px;
+}
+
+.shimmer-metric-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  border-radius: 18px;
+}
+
+.shimmer-detail-page {
+  display: grid;
+  gap: 22px;
+}
+
+.shimmer-detail-card {
+  border-radius: 22px;
+  padding: 24px;
+}
+
+.shimmer-detail-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.shimmer-avatar {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
+  border-radius: 24px;
+}
+
+.shimmer-detail-title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.shimmer-detail-title {
+  width: min(320px, 80%);
+  height: 26px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.shimmer-detail-subtitle {
+  width: min(220px, 62%);
+  height: 14px;
+  border-radius: 999px;
+}
+
+.shimmer-detail-badge {
+  width: 86px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+.shimmer-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid rgba(20, 63, 117, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.shimmer-detail-field {
+  padding: 18px;
+  border-right: 1px solid rgba(20, 63, 117, 0.08);
+  border-bottom: 1px solid rgba(20, 63, 117, 0.08);
+}
+
+.shimmer-detail-label {
+  width: 42%;
+  height: 11px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.shimmer-detail-value {
+  width: 76%;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.shimmer-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.shimmer-stat-card {
+  min-height: 86px;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.shimmer-stat-label {
+  width: 58%;
+  height: 11px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.shimmer-stat-value {
+  width: 38%;
+  height: 22px;
+  border-radius: 10px;
+}
+
+.shimmer-section-title {
+  width: 220px;
+  height: 18px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .shimmer-table-header,
+  .shimmer-table-row {
+    gap: 10px;
+    padding: 13px 12px;
+  }
+
+  .shimmer-header-line,
+  .shimmer-cell-line {
+    height: 11px;
+  }
+
+  .shimmer-metric-card {
+    min-height: 110px;
+    padding: 18px;
+  }
+
+  .shimmer-metric-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+  }
+
+  .shimmer-detail-top {
+    align-items: flex-start;
+  }
+
+  .shimmer-detail-badge {
+    display: none;
+  }
+
+  .shimmer-detail-grid,
+  .shimmer-stats-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .shimmer-detail-field {
+    border-right: 0;
+  }
+}

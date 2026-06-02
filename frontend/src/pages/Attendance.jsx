@@ -5,6 +5,7 @@ import { FiCalendar, FiRefreshCcw, FiSave, FiSearch } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerTable } from '../components/ShimmerLoading.jsx';
 import React from 'react';
 
 const attendanceStatusOptions = ['Present', 'Absent', 'Late', 'Leave'].map((value) => ({ value }));
@@ -359,16 +360,19 @@ export default function Attendance() {
           </Space>
         </div>
 
-        <Table
-          rowKey="key"
-          columns={isMobile ? mobileColumns : columns}
-          dataSource={sheet}
-          loading={loading}
-          scroll={isMobile ? undefined : { x: 900 }}
-          tableLayout="fixed"
-          size={isMobile ? 'small' : 'middle'}
-          className="attendance-table mobile-focused-table"
-        />
+        {loading ? (
+          <ShimmerTable columns={isMobile ? 3 : 5} rows={8} />
+        ) : (
+          <Table
+            rowKey="key"
+            columns={isMobile ? mobileColumns : columns}
+            dataSource={sheet}
+            scroll={isMobile ? undefined : { x: 900 }}
+            tableLayout="fixed"
+            size={isMobile ? 'small' : 'middle'}
+            className="attendance-table mobile-focused-table"
+          />
+        )}
       </Card>
 
       <Card className="content-card" bordered={false} title="Attendance History">
@@ -446,16 +450,19 @@ export default function Attendance() {
           </Space>
         </div>
 
-        <Table
-          rowKey="_id"
-          columns={isMobile ? mobileHistoryColumns : historyColumns}
-          dataSource={history}
-          loading={historyLoading}
-          scroll={isMobile ? undefined : { x: 1000 }}
-          tableLayout="fixed"
-          size={isMobile ? 'small' : 'middle'}
-          className="attendance-history-table mobile-focused-table"
-        />
+        {historyLoading ? (
+          <ShimmerTable columns={isMobile ? 3 : 7} rows={8} />
+        ) : (
+          <Table
+            rowKey="_id"
+            columns={isMobile ? mobileHistoryColumns : historyColumns}
+            dataSource={history}
+            scroll={isMobile ? undefined : { x: 1000 }}
+            tableLayout="fixed"
+            size={isMobile ? 'small' : 'middle'}
+            className="attendance-history-table mobile-focused-table"
+          />
+        )}
       </Card>
     </div>
   );

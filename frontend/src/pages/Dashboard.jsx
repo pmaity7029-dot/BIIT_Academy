@@ -5,6 +5,7 @@ import { FiAward, FiCalendar, FiCheckCircle, FiCreditCard, FiPlus, FiUsers } fro
 import api from '../api/client.js';
 import MetricCard from '../components/MetricCard.jsx';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerMetricGrid, ShimmerTable } from '../components/ShimmerLoading.jsx';
 import dayjs from 'dayjs';
 import React from "react";
 
@@ -91,20 +92,24 @@ export default function Dashboard() {
         onAction={() => navigate('/admin/students')}
       />
 
-      <div className="metric-grid dashboard-metric-grid">
-        <MetricCard title="Total Students" value={metrics.totalStudents || 0} icon={<FiUsers />} />
-        <MetricCard title="Active Students" value={metrics.activeStudents || 0} icon={<FiCheckCircle />} />
-        <MetricCard title="Present Today" value={metrics.presentToday || 0} icon={<FiCalendar />} />
-        <MetricCard title="Revenue" value={metrics.monthlyRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
-        <MetricCard title="Certs Issued" value={metrics.certificatesIssued || 0} icon={<FiAward />} />
-      </div>
+      {loading ? (
+        <ShimmerMetricGrid cards={5} />
+      ) : (
+        <div className="metric-grid dashboard-metric-grid">
+          <MetricCard title="Total Students" value={metrics.totalStudents || 0} icon={<FiUsers />} />
+          <MetricCard title="Active Students" value={metrics.activeStudents || 0} icon={<FiCheckCircle />} />
+          <MetricCard title="Present Today" value={metrics.presentToday || 0} icon={<FiCalendar />} />
+          <MetricCard title="Revenue" value={metrics.monthlyRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
+          <MetricCard title="Certs Issued" value={metrics.certificatesIssued || 0} icon={<FiAward />} />
+        </div>
+      )}
 
       <Card className="content-card" bordered={false}>
         <div className="section-toolbar">
           <Typography.Title level={4}>Today's Attendance</Typography.Title>
           <Button onClick={() => navigate('/admin/attendance')}>Mark Attendance</Button>
         </div>
-        <Typography.Text type="secondary">Use the attendance section to mark daily status and filter records by date, month, or student.</Typography.Text>
+        <Typography.Text type="secondary">Attendance section to mark daily status and filter records by date, month, or student.</Typography.Text>
       </Card>
 
       <Card className="content-card" bordered={false}>
@@ -112,17 +117,20 @@ export default function Dashboard() {
           <Typography.Title level={4}>Recently Enrolled Students</Typography.Title>
           <Button onClick={() => navigate('/admin/students')}>View All</Button>
         </div>
-        <Table
-          rowKey="_id"
-          columns={isMobile ? mobileColumns : columns}
-          dataSource={students}
-          loading={loading}
-          pagination={false}
-          scroll={isMobile ? undefined : { x: 760 }}
-          tableLayout="fixed"
-          size={isMobile ? 'small' : 'middle'}
-          className="dashboard-recent-table mobile-focused-table"
-        />
+        {loading ? (
+          <ShimmerTable columns={isMobile ? 2 : 6} rows={6} />
+        ) : (
+          <Table
+            rowKey="_id"
+            columns={isMobile ? mobileColumns : columns}
+            dataSource={students}
+            pagination={false}
+            scroll={isMobile ? undefined : { x: 760 }}
+            tableLayout="fixed"
+            size={isMobile ? 'small' : 'middle'}
+            className="dashboard-recent-table mobile-focused-table"
+          />
+        )}
       </Card>
     </div>
   );

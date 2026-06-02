@@ -24,6 +24,7 @@ import {
 import dayjs from "dayjs";
 import api from "../api/client.js";
 import PageHeader from "../components/PageHeader.jsx";
+import { ShimmerTable } from "../components/ShimmerLoading.jsx";
 import { printExactElement } from "../utils/printElement.js";
 import React from "react";
 
@@ -371,14 +372,17 @@ export default function Payments() {
             </Button>
           </Space>
         </div>
-        <Table
-          rowKey="_id"
-          columns={columns}
-          dataSource={payments}
-          loading={loading}
-          scroll={{ x: "max-content" }}
-          tableLayout="auto"
-        />
+        {loading ? (
+          <ShimmerTable columns={8} rows={7} />
+        ) : (
+          <Table
+            rowKey="_id"
+            columns={columns}
+            dataSource={payments}
+            scroll={{ x: "max-content" }}
+            tableLayout="auto"
+          />
+        )}
       </Card>
 
       <Modal

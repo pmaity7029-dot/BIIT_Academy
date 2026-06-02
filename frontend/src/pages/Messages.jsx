@@ -4,6 +4,7 @@ import { FiMail, FiSend } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerTable } from '../components/ShimmerLoading.jsx';
 import React from "react";
 
 const studentStatusOptions = [
@@ -15,22 +16,29 @@ const studentStatusOptions = [
 export default function Messages() {
   const [logs, setLogs] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const recipientType = Form.useWatch('recipientType', form);
 
   const load = async () => {
-    const [logsRes, batchesRes] = await Promise.all([
-      api.get('/mail'),
-      api.get('/students/batches/list')
-    ]);
+    setLoading(true);
 
-    setLogs(logsRes.data);
-    setBatchOptions(
-      (batchesRes.data || []).map((batch) => ({
-        value: batch,
-        label: batch
-      }))
-    );
+    try {
+      const [logsRes, batchesRes] = await Promise.all([
+        api.get('/mail'),
+        api.get('/students/batches/list')
+      ]);
+
+      setLogs(logsRes.data);
+      setBatchOptions(
+        (batchesRes.data || []).map((batch) => ({
+          value: batch,
+          label: batch
+        }))
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load().catch(() => message.error('Message logs loading failed')); }, []);
@@ -124,7 +132,11 @@ export default function Messages() {
         </Form>
       </Card>
       <Card className="content-card" bordered={false} title="Communication Logs">
-        <Table rowKey="_id" columns={columns} dataSource={logs} scroll={{ x: 800 }} />
+        {loading ? (
+          <ShimmerTable columns={4} rows={6} />
+        ) : (
+          <Table rowKey="_id" columns={columns} dataSource={logs} scroll={{ x: 800 }} />
+        )}
       </Card>
     </div>
   );

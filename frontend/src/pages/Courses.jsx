@@ -19,6 +19,7 @@ import { FiBookOpen, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
 import dayjs from "dayjs";
 import api from "../api/client.js";
 import PageHeader from "../components/PageHeader.jsx";
+import { ShimmerTable } from "../components/ShimmerLoading.jsx";
 import React from "react";
 
 const courseStatusOptions = ["Active", "Inactive", "Completed"].map(
@@ -432,16 +433,19 @@ const courseColumns = [
               children: (
                 <>
                   {batchToolbar}
-                  <Table
-                    rowKey="_id"
-                    columns={batchColumns}
-                    dataSource={batches}
-                    loading={loadingBatches}
-                    scroll={{ x: 1240 }}
-                    tableLayout="fixed"
-                    size="middle"
-                    className="course-batch-table"
-                  />
+                  {loadingBatches ? (
+                    <ShimmerTable columns={6} rows={7} />
+                  ) : (
+                    <Table
+                      rowKey="_id"
+                      columns={batchColumns}
+                      dataSource={batches}
+                      scroll={{ x: 1240 }}
+                      tableLayout="fixed"
+                      size="middle"
+                      className="course-batch-table"
+                    />
+                  )}
                 </>
               ),
             },
@@ -451,16 +455,19 @@ const courseColumns = [
               children: (
                 <>
                   {courseToolbar}
-                  <Table
-                    rowKey="_id"
-                    columns={courseColumns}
-                    dataSource={courses}
-                    loading={loadingCourses}
-                    scroll={{ x: 1080 }}
-                    tableLayout="fixed"
-                    size="middle"
-                    className="course-list-table compact-course-table"
-                  />
+                  {loadingCourses ? (
+                    <ShimmerTable columns={6} rows={7} />
+                  ) : (
+                    <Table
+                      rowKey="_id"
+                      columns={courseColumns}
+                      dataSource={courses}
+                      scroll={{ x: 1080 }}
+                      tableLayout="fixed"
+                      size="middle"
+                      className="course-list-table compact-course-table"
+                    />
+                  )}
                 </>
               ),
             },

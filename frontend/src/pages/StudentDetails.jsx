@@ -5,6 +5,7 @@ import { FiArrowLeft, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerDetailPage } from '../components/ShimmerLoading.jsx';
 import React from 'react';
 
 const attendanceColor = (status) => {
@@ -34,7 +35,7 @@ export default function StudentDetails() {
 
   useEffect(() => { load(); }, [id]);
 
-  if (!data) return <Card loading={loading} />;
+  if (!data) return <ShimmerDetailPage />;
 
   const { student, attendanceStats, attendance = [], payments } = data;
 

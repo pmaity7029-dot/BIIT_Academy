@@ -24,6 +24,7 @@ import {
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerTable } from '../components/ShimmerLoading.jsx';
 import React from 'react';
 import logo from "../images/logo.png";
 import nsdc from "../images/nsdc.jpeg";
@@ -1304,18 +1305,21 @@ const columns = [
           </Space>
         </div>
 
-        <Table
-          rowKey="_id"
-          columns={columns}
-          dataSource={certificates}
-          loading={loading}
-          scroll={{ x: "max-content" }}
-          tableLayout="auto"
-          onRow={(record) => ({
-            onClick: () => setSelected(record),
-            onDoubleClick: () => openEditorFromCertificate(record),
-          })}
-        />
+        {loading ? (
+          <ShimmerTable columns={6} rows={7} />
+        ) : (
+          <Table
+            rowKey="_id"
+            columns={columns}
+            dataSource={certificates}
+            scroll={{ x: "max-content" }}
+            tableLayout="auto"
+            onRow={(record) => ({
+              onClick: () => setSelected(record),
+              onDoubleClick: () => openEditorFromCertificate(record),
+            })}
+          />
+        )}
       </Card>
 
       <Modal
@@ -1332,13 +1336,13 @@ const columns = [
           <Button key="cancel" onClick={() => setEditorOpen(false)}>
             Cancel
           </Button>,
-          <Button
-            key="print"
-            icon={<FiPrinter />}
-            onClick={() => printCertificate(editorCertRef)}
-          >
-            Print Preview
-          </Button>,
+          // <Button
+          //   key="print"
+          //   icon={<FiPrinter />}
+          //   onClick={() => printCertificate(editorCertRef)}
+          // >
+          //   Print Preview
+          // </Button>,
           <Button
             key="save"
             type="primary"

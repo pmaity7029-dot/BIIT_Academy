@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiBarChart2, FiSearch } from 'react-icons/fi';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
+import { ShimmerTable } from '../components/ShimmerLoading.jsx';
 import React from 'react';
 
 const sortOptions = [
@@ -292,16 +293,19 @@ export default function Performance() {
           </Space>
         </div>
 
-        <Table
-          rowKey={(row) => row.student?._id}
-          columns={isMobile ? mobileColumns : columns}
-          dataSource={filteredRows}
-          loading={loading}
-          scroll={isMobile ? undefined : { x: 985 }}
-          tableLayout="fixed"
-          size={isMobile ? 'small' : 'middle'}
-          className="performance-table mobile-focused-table"
-        />
+        {loading ? (
+          <ShimmerTable columns={isMobile ? 3 : 7} rows={8} />
+        ) : (
+          <Table
+            rowKey={(row) => row.student?._id}
+            columns={isMobile ? mobileColumns : columns}
+            dataSource={filteredRows}
+            scroll={isMobile ? undefined : { x: 985 }}
+            tableLayout="fixed"
+            size={isMobile ? 'small' : 'middle'}
+            className="performance-table mobile-focused-table"
+          />
+        )}
       </Card>
     </div>
   );
