@@ -1286,11 +1286,16 @@ const columns = [
               enterButton={<FiSearch />}
               placeholder="Search certificate, student, reg no, course..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setSearch(value);
+                load(value);
+              }}
               onSearch={(value) => {
                 setSearch(value);
                 load(value);
               }}
+              className="live-search-input"
               style={{ width: 340 }}
             />
 

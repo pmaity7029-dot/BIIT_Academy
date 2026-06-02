@@ -9,7 +9,6 @@ import {
   Select,
   Space,
   Table,
-  Tag,
   message
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
@@ -24,11 +23,6 @@ import React from 'react';
 
 const studentStatusOptions = ['Active', 'Inactive', 'Completed'].map((value) => ({ value }));
 
-const statusColor = (status) => {
-  if (status === 'Active') return 'green';
-  if (status === 'Completed') return 'blue';
-  return 'default';
-};
 
 const cleanParams = (params) => {
   return Object.fromEntries(
@@ -191,12 +185,10 @@ export default function Students() {
         <Select
           value={status}
           size="small"
+          className="attendance-status-select"
           style={{ width: 125 }}
           onChange={(value) => updateStudentStatus(row, value)}
-          options={studentStatusOptions.map((item) => ({
-            ...item,
-            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>
-          }))}
+          options={studentStatusOptions}
         />
       )
     },
@@ -299,10 +291,9 @@ export default function Students() {
               allowClear
               enterButton={<FiSearch />}
               value={filters.search}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, search: event.target.value }))
-              }
+              onChange={(event) => applyFilters({ search: event.target.value })}
               onSearch={(value) => applyFilters({ search: value })}
+              className="live-search-input"
               style={{ width: 380 }}
             />
 

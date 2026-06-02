@@ -216,6 +216,7 @@ export default function Payments() {
         <Select
           value={status}
           size="small"
+          className="attendance-status-select"
           style={{ width: 125 }}
           onChange={(value) => updatePaymentStatus(row, value)}
           options={paymentStatuses}
@@ -343,10 +344,9 @@ export default function Payments() {
               enterButton={<FiSearch />}
               placeholder="Search receipt, student, reg no, month..."
               value={filters.search}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, search: event.target.value }))
-              }
+              onChange={(event) => applyFilter({ search: event.target.value })}
               onSearch={(value) => applyFilter({ search: value })}
+              className="live-search-input"
               style={{ width: 340 }}
             />
             <Select

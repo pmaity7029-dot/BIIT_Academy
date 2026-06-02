@@ -11,7 +11,6 @@ import {
   Space,
   Table,
   Tabs,
-  Tag,
   message,
 } from "antd";
 import { useEffect, useState } from "react";
@@ -33,12 +32,6 @@ const batchStatusOptions = [
   "Upcoming",
 ].map((value) => ({ value }));
 
-const statusColor = (status) => {
-  if (status === "Active" || status === "Running") return "green";
-  if (status === "Completed") return "blue";
-  if (status === "Upcoming") return "gold";
-  return "default";
-};
 
 const toDayjs = (date) => (date ? dayjs(date) : null);
 
@@ -319,6 +312,7 @@ export default function Courses() {
         <Select
           value={status}
           size="small"
+          className="attendance-status-select"
           style={{ width: 125 }}
           onChange={(value) => updateCourseStatus(row, value)}
           options={courseStatusOptions}
@@ -399,6 +393,7 @@ export default function Courses() {
         <Select
           value={status}
           size="small"
+          className="attendance-status-select"
           style={{ width: 125 }}
           onChange={(value) => updateBatchStatus(row, value)}
           options={batchStatusOptions}
@@ -448,10 +443,7 @@ export default function Courses() {
           placeholder="Status"
           value={batchFilters.status || undefined}
           onChange={(value) => applyBatchFilters({ status: value || "" })}
-          options={batchStatusOptions.map((item) => ({
-            ...item,
-            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>,
-          }))}
+          options={batchStatusOptions}
           style={{ width: 170 }}
         />
         <Button onClick={() => applyBatchFilters({ search: "", status: "" })}>
@@ -489,10 +481,7 @@ export default function Courses() {
           placeholder="Status"
           value={courseFilters.status || undefined}
           onChange={(value) => applyCourseFilters({ status: value || "" })}
-          options={courseStatusOptions.map((item) => ({
-            ...item,
-            label: <Tag color={statusColor(item.value)}>{item.value}</Tag>,
-          }))}
+          options={courseStatusOptions}
           style={{ width: 170 }}
         />
         <Button onClick={() => applyCourseFilters({ search: "", status: "" })}>

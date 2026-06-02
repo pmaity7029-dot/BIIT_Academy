@@ -436,13 +436,9 @@ export default function Attendance() {
               enterButton={<FiSearch />}
               placeholder="Search name, reg no, batch..."
               value={historyFilters.search}
-              onChange={(event) =>
-                setHistoryFilters((prev) => ({
-                  ...prev,
-                  search: event.target.value
-                }))
-              }
+              onChange={(event) => applyHistoryFilters({ search: event.target.value })}
               onSearch={(value) => applyHistoryFilters({ search: value })}
+              className="live-search-input"
               style={{ width: 300 }}
             />
 
