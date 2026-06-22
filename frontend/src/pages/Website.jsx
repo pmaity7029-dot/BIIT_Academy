@@ -1,13 +1,14 @@
-import { Button, Card, Col, Row, Typography, Tag, Avatar } from 'antd';
-import React, { useEffect } from "react";
+import { Button, Card, Col, Row, Typography, Tag, Avatar, Drawer } from 'antd';
+import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { 
   FiArrowRight, FiAward, FiBookOpen, FiMonitor, 
-  FiPhone, FiUsers, FiStar 
+  FiPhone, FiUsers, FiStar, FiMenu 
 } from 'react-icons/fi';
 
 export default function Website() {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Scroll Reveal Animation Logic
   useEffect(() => {
@@ -103,18 +104,51 @@ export default function Website() {
     { name: "Nibedita Sasmal", role: "GDS ABPM (TAKAPURA BO)", company: "Takapura, Purba Medinipur" }
   ];
 
+  const closeMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="site-page">
       <header className="site-header">
         <div className="site-brand"><FiMonitor /> <span>BIIT</span></div>
-        <nav>
+        
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav">
           <a href="#about" className="nav-link">About</a>
           <a href="#courses" className="nav-link">Courses</a>
           <a href="#success" className="nav-link">Success Stories</a>
           <a href="#contact" className="nav-link">Contact</a>
-          <Button type="primary" size="large" className="nav-btn" onClick={() => navigate('/admin')}>Admin Login</Button>
         </nav>
+
+        {/* Right Actions (Visible on both Mobile & Desktop) */}
+        <div className="header-right">
+          <Button type="primary" size="large" className="nav-admin-btn" onClick={() => navigate('/admin')}>
+            Admin Login
+          </Button>
+          <Button 
+            className="mobile-menu-toggle" 
+            type="text" 
+            icon={<FiMenu />} 
+            onClick={() => setMobileMenuOpen(true)} 
+          />
+        </div>
       </header>
+
+      {/* Mobile Menu Drawer */}
+      <Drawer
+        title="BIIT Navigation"
+        placement="right"
+        onClose={closeMenu}
+        open={mobileMenuOpen}
+        width={250}
+        className="mobile-nav-drawer"
+      >
+        <div className="mobile-nav-links">
+          <a href="#about" className="nav-link" onClick={closeMenu}>About</a>
+          <a href="#courses" className="nav-link" onClick={closeMenu}>Courses</a>
+          <a href="#success" className="nav-link" onClick={closeMenu}>Success Stories</a>
+          <a href="#contact" className="nav-link" onClick={closeMenu}>Contact</a>
+        </div>
+      </Drawer>
 
       <section className="hero-section" id="about">
         <div className="hero-copy reveal">
@@ -126,8 +160,12 @@ export default function Website() {
           </Typography.Paragraph>
           
           <div className="hero-actions">
-            <Button type="primary" size="large" className="animated-btn" icon={<FiArrowRight />} href="#courses">Explore Courses</Button>
-            <Button size="large" className="animated-btn secondary-btn" icon={<FiPhone />} href="#contact">Contact Us</Button>
+            <Button type="primary" size="large" className="animated-btn hero-btn" icon={<FiArrowRight />} href="#courses">
+              Explore Courses
+            </Button>
+            <Button size="large" className="animated-btn secondary-btn hero-btn" icon={<FiPhone />} href="#contact">
+              Contact Us
+            </Button>
           </div>
         </div>
         <Card className="hero-card floating-card reveal" bordered={false}>
@@ -145,7 +183,7 @@ export default function Website() {
           {[
             { icon: <FiAward />, title: 'Government Recognized', text: 'ভারত সরকার স্বীকৃত সার্টিফিকেট সর্বত্র গ্রহণ যোগ্য।' },
             { icon: <FiUsers />, title: 'Experienced Faculty', text: 'দীর্ঘ বছরের অভিজ্ঞতা ও সর্বশ্রেষ্ঠ কম্পিউটার সেন্টার এবং অভিজ্ঞ শিক্ষক মন্ডলী।' },
-            { icon: <FiBookOpen />, title: 'Extra Classes', text: 'ছাত্র-ছাত্রীদের প্রয়োজন অনুসারে অতিরিক্ত ক্লাসের ব্যবস্থা।' }
+            { icon: <FiBookOpen />, title: 'Extra Classes', text: 'ছাত্র-ছাত্রীদের প্রয়োজন অনুসারে অতিরিক্ত ক্লাসের ব্যবস্থা।' }
           ].map((item, index) => (
             <Col xs={24} md={8} key={item.title} style={{ display: 'flex' }}>
               <Card className="feature-card interactive-card" bordered={false} style={{ width: '100%', display: 'flex', flexDirection: 'column', animationDelay: `${index * 0.1}s` }}>
@@ -227,3 +265,7 @@ export default function Website() {
     </div>
   );
 }
+
+
+
+

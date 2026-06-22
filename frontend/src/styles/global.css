@@ -1657,3 +1657,139 @@ a { color: inherit; text-decoration: none; }
 .admin-content { padding: 34px; min-height: calc(100vh - 74px); background: var(--bg); }
 .admin-header { height: 74px; background: #ffffff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 1000; }
 /* (Baki admin ka css waisa hi chota rehta hai) */
+
+
+
+
+
+
+/* --- Mobile Website & Landing Page Overrides --- */
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 20px;
+}
+
+.mobile-nav-links .nav-link {
+  font-size: 18px;
+  color: var(--text);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Header specific mobile fixes */
+  .desktop-nav { 
+    display: none !important; 
+  }
+  
+  .mobile-menu-toggle { 
+    display: inline-flex !important; 
+    font-size: 24px; 
+    color: var(--primary); 
+    padding: 0 4px;
+  }
+  
+  .site-header { 
+    padding: 0 16px; 
+  }
+
+  .nav-admin-btn {
+    font-size: 14px;
+    height: 36px;
+    padding: 0 16px;
+  }
+
+  /* Hero section mobile stacking */
+  .hero-actions { 
+    flex-direction: column; 
+    width: 100%; 
+    gap: 14px; 
+  }
+  
+  .hero-btn { 
+    width: 100%; 
+    display: flex;
+    justify-content: flex-start; /* Aligns text and icon to the left */
+    padding-left: 20px;
+  }
+
+  /* Make typography flow better on mobile */
+  .hero-title.ant-typography {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+  
+  .hero-subtitle.ant-typography {
+    font-size: 15px;
+  }
+}
+
+
+
+
+
+
+
+/* --- Mobile Hero Section Fix --- */
+@media (max-width: 992px) {
+  .hero-section {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 40px 20px !important;
+    gap: 30px !important;
+    overflow: hidden; /* Prevents horizontal scrollbar */
+  }
+
+  .hero-copy {
+    width: 100% !important;
+  }
+
+  .hero-card {
+    width: 100% !important;
+    margin: 0 !important;
+    min-height: auto !important; /* Allows card to shrink if needed */
+  }
+
+  .course-highlight {
+    padding: 30px 20px !important;
+  }
+
+  /* Force buttons to stack and stretch 100% width */
+  .hero-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .hero-actions .ant-btn {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-start !important; /* Keeps icon and text aligned left */
+    padding-left: 24px !important;
+  }
+}
+
+
+
+/* --- Hide Hero Buttons on Mobile View --- */
+@media (max-width: 768px) {
+  .hero-actions {
+    display: none !important;
+  }
+}
