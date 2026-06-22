@@ -53,24 +53,17 @@ export default function Students() {
 
   const loadBatches = async () => {
     try {
-      const [studentBatchRes, courseBatchRes] = await Promise.allSettled([
-        api.get('/students/batches/list'),
-        api.get('/courses/batches/list')
-      ]);
+      // Sirf official Batches database se batches fetch karega
+      const { data } = await api.get('/courses/batches/list');
+      
+      const validBatches = (data || [])
+        // Optional: Agar aap chahein ki sirf 'Active' ya 'Running' batches hi dikhein, 
+        // toh niche wali line ko uncomment kar sakte hain:
+        // .filter(batch => batch.status === 'Active' || batch.status === 'Running')
+        .map((batch) => batch.name)
+        .filter(Boolean);
 
-      const studentBatches =
-        studentBatchRes.status === 'fulfilled' ? studentBatchRes.value.data || [] : [];
-
-      const courseBatches =
-        courseBatchRes.status === 'fulfilled'
-          ? (courseBatchRes.value.data || []).map((batch) => batch.name).filter(Boolean)
-          : [];
-
-      setBatchOptions(
-        [...new Set([...studentBatches, ...courseBatches])]
-          .filter(Boolean)
-          .sort((a, b) => String(a).localeCompare(String(b)))
-      );
+      setBatchOptions(validBatches.sort((a, b) => String(a).localeCompare(String(b))));
     } catch (error) {
       setBatchOptions([]);
     }

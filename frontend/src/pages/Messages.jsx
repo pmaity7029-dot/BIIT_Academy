@@ -20,22 +20,41 @@ export default function Messages() {
   const [form] = Form.useForm();
   const recipientType = Form.useWatch('recipientType', form);
 
-  const load = async () => {
+const load = async () => {
     setLoading(true);
-
     try {
-      const [logsRes, batchesRes] = await Promise.all([
-        api.get('/mail'),
-        api.get('/students/batches/list')
+      // Pehle logs fetch karein
+      const logsRes = await api.get('/mail');
+      setLogs(logsRes.data);
+
+      // Phir dono sources se batches fetch karein
+      const [studentBatchRes, courseBatchRes] = await Promise.allSettled([
+        api.get('/students/batches/list'),
+        api.get('/courses/batches/list')
       ]);
 
-      setLogs(logsRes.data);
+      const studentBatches =
+        studentBatchRes.status === 'fulfilled' ? studentBatchRes.value.data || [] : [];
+      
+      const courseBatches =
+        courseBatchRes.status === 'fulfilled'
+          ? (courseBatchRes.value.data || []).map((batch) => batch.name).filter(Boolean)
+          : [];
+
+      // Combine aur filter karein
+      const validBatches = [...new Set([...studentBatches, ...courseBatches])]
+        .filter((batch) => batch && batch.trim().length > 2)
+        .sort((a, b) => String(a).localeCompare(String(b)));
+
       setBatchOptions(
-        (batchesRes.data || []).map((batch) => ({
+        validBatches.map((batch) => ({
           value: batch,
           label: batch
         }))
       );
+    } catch (error) {
+      // Agar error aaye toh handle karein
+      console.error(error);
     } finally {
       setLoading(false);
     }

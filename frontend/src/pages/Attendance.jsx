@@ -57,10 +57,27 @@ export default function Attendance() {
     setStudents(data);
   };
 
-  const loadBatches = async () => {
+const loadBatches = async () => {
     try {
-      const { data } = await api.get('/students/batches/list');
-      setBatchOptions(data || []);
+      const [studentBatchRes, courseBatchRes] = await Promise.allSettled([
+        api.get('/students/batches/list'),
+        api.get('/courses/batches/list')
+      ]);
+
+      const studentBatches =
+        studentBatchRes.status === 'fulfilled' ? studentBatchRes.value.data || [] : [];
+      
+      const courseBatches =
+        courseBatchRes.status === 'fulfilled'
+          ? (courseBatchRes.value.data || []).map((batch) => batch.name).filter(Boolean)
+          : [];
+
+      // Dono lists combine karein aur typos (jaise 'D') filter kar dein
+      const validBatches = [...new Set([...studentBatches, ...courseBatches])]
+        .filter((batch) => batch && batch.trim().length > 2)
+        .sort((a, b) => String(a).localeCompare(String(b)));
+
+      setBatchOptions(validBatches);
     } catch (error) {
       setBatchOptions([]);
     }

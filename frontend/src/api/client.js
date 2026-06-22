@@ -36,6 +36,9 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem('biit_token');
       localStorage.removeItem('biit_user');
+      
+      // Redirect to login page on JWT expiration
+      window.location.href = '/admin/login';
     }
 
     const originalRequest = error?.config;
