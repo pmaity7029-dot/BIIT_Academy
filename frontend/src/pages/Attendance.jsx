@@ -1,7 +1,7 @@
-import { Button, Card, DatePicker, Grid, Input, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, DatePicker, Grid, Input, Select, Space, Table, Tag, message, Rate } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCalendar, FiRefreshCcw, FiSave, FiSearch } from 'react-icons/fi';
+import { FiCalendar, FiRefreshCcw, FiSave, FiSearch, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
@@ -57,7 +57,7 @@ export default function Attendance() {
     setStudents(data);
   };
 
-const loadBatches = async () => {
+  const loadBatches = async () => {
     try {
       const [studentBatchRes, courseBatchRes] = await Promise.allSettled([
         api.get('/students/batches/list'),
@@ -72,7 +72,6 @@ const loadBatches = async () => {
           ? (courseBatchRes.value.data || []).map((batch) => batch.name).filter(Boolean)
           : [];
 
-      // Dono lists combine karein aur typos (jaise 'D') filter kar dein
       const validBatches = [...new Set([...studentBatches, ...courseBatches])]
         .filter((batch) => batch && batch.trim().length > 2)
         .sort((a, b) => String(a).localeCompare(String(b)));
@@ -96,7 +95,8 @@ const loadBatches = async () => {
           key: row.student._id,
           student: row.student,
           status: row.attendance?.status || 'Present',
-          notes: row.attendance?.notes || ''
+          notes: row.attendance?.notes || '',
+          performanceRating: row.attendance?.performanceRating || 0
         }))
       );
     } catch (error) {
@@ -151,6 +151,10 @@ const loadBatches = async () => {
     );
   };
 
+  const markAllStatus = (status) => {
+    setSheet((prev) => prev.map((row) => ({ ...row, status })));
+  };
+
   const applyHistoryFilters = (patch) => {
     const nextFilters = { ...historyFilters, ...patch };
 
@@ -187,7 +191,8 @@ const loadBatches = async () => {
         records: sheet.map((row) => ({
           student: row.student._id,
           status: row.status,
-          notes: row.notes
+          notes: row.notes,
+          performanceRating: row.performanceRating || null
         }))
       });
 
@@ -199,10 +204,11 @@ const loadBatches = async () => {
   };
 
   const columns = [
-    { title: 'Reg No.', dataIndex: ['student', 'regNo'] },
+    { title: 'Reg No.', dataIndex: ['student', 'regNo'], width: 140 },
     {
       title: 'Student',
       dataIndex: ['student', 'name'],
+      width: 200,
       render: (text, row) => (
         <Button
           type="link"
@@ -213,16 +219,28 @@ const loadBatches = async () => {
         </Button>
       )
     },
-    { title: 'Batch', dataIndex: ['student', 'batch'] },
+    { title: 'Batch', dataIndex: ['student', 'batch'], width: 180 },
     {
       title: 'Status',
+      width: 160,
       render: (_, row) => (
         <Select
           value={row.status}
-          className="attendance-status-select"
-          style={{ width: 140 }}
+          className={`attendance-status-select status-${row.status.toLowerCase()}`}
+          style={{ width: '100%' }}
           onChange={(value) => updateRow(row.key, { status: value })}
           options={attendanceStatusOptions}
+        />
+      )
+    },
+    {
+      title: 'Performance',
+      width: 170,
+      render: (_, row) => (
+        <Rate
+          value={row.performanceRating}
+          onChange={(value) => updateRow(row.key, { performanceRating: value })}
+          style={{ color: '#faad14', fontSize: '16px' }}
         />
       )
     },
@@ -256,20 +274,22 @@ const loadBatches = async () => {
       )
     },
     {
-      title: 'Status',
+      title: 'Status & Perf.',
       render: (_, row) => (
-        <Select
-          value={row.status}
-          className="attendance-status-select"
-          onChange={(value) => updateRow(row.key, { status: value })}
-          options={attendanceStatusOptions}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Select
+            value={row.status}
+            className={`attendance-status-select status-${row.status.toLowerCase()}`}
+            onChange={(value) => updateRow(row.key, { status: value })}
+            options={attendanceStatusOptions}
+          />
+          <Rate
+            value={row.performanceRating}
+            onChange={(value) => updateRow(row.key, { performanceRating: value })}
+            style={{ color: '#faad14', fontSize: '14px' }}
+          />
+        </div>
       )
-    },
-    {
-      title: 'Batch',
-      dataIndex: ['student', 'batch'],
-      ellipsis: true
     }
   ];
 
@@ -278,11 +298,6 @@ const loadBatches = async () => {
       title: 'Date',
       dataIndex: 'date',
       render: (value) => dayjs(value).format('DD MMM YYYY')
-    },
-    {
-      title: 'Day',
-      dataIndex: 'date',
-      render: (value) => dayjs(value).format('dddd')
     },
     {
       title: 'Student',
@@ -297,12 +312,16 @@ const loadBatches = async () => {
         </Button>
       )
     },
-    { title: 'Reg No.', dataIndex: ['student', 'regNo'] },
     { title: 'Batch', dataIndex: ['student', 'batch'] },
     {
       title: 'Status',
       dataIndex: 'status',
       render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag>
+    },
+    {
+      title: 'Performance',
+      dataIndex: 'performanceRating',
+      render: (rating) => rating ? <Rate disabled defaultValue={rating} style={{ fontSize: '14px' }} /> : '-'
     },
     { title: 'Notes', dataIndex: 'notes' }
   ];
@@ -326,22 +345,26 @@ const loadBatches = async () => {
     },
     {
       title: 'Status',
-      dataIndex: 'status',
-      render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag>
-    },
-    {
-      title: 'Batch',
-      dataIndex: ['student', 'batch'],
-      ellipsis: true
+      render: (_, row) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Tag color={attendanceColor(row.status)} style={{ width: 'fit-content' }}>{row.status}</Tag>
+          {row.performanceRating ? <Rate disabled defaultValue={row.performanceRating} style={{ fontSize: '12px' }} /> : null}
+        </div>
+      )
     }
   ];
 
   return (
     <div>
+      <style>{`
+        .status-present .ant-select-selector { background-color: #f6ffed !important; border-color: #b7eb8f !important; color: #389e0d !important; }
+        .status-absent .ant-select-selector { background-color: #fff2f0 !important; border-color: #ffccc7 !important; color: #cf1322 !important; }
+      `}</style>
+
       <PageHeader
         icon={<FiCalendar />}
         title="Attendance"
-        subtitle="Mark daily attendance and filter attendance batch wise"
+        subtitle="Mark daily attendance, filter by batch, and rate daily performance."
       />
 
       <Card className="content-card" bordered={false}>
@@ -367,6 +390,13 @@ const loadBatches = async () => {
               style={{ width: 230 }}
             />
 
+            <Button onClick={() => markAllStatus('Present')} style={{ color: '#389e0d', borderColor: '#b7eb8f', background: '#f6ffed' }} icon={<FiCheckCircle />}>
+              All Present
+            </Button>
+            <Button onClick={() => markAllStatus('Absent')} style={{ color: '#cf1322', borderColor: '#ffccc7', background: '#fff2f0' }} icon={<FiXCircle />}>
+              All Absent
+            </Button>
+
             <Button type="primary" icon={<FiSave />} onClick={save}>
               Save Attendance
             </Button>
@@ -378,13 +408,13 @@ const loadBatches = async () => {
         </div>
 
         {loading ? (
-          <ShimmerTable columns={isMobile ? 3 : 5} rows={8} />
+          <ShimmerTable columns={isMobile ? 2 : 6} rows={8} />
         ) : (
           <Table
             rowKey="key"
             columns={isMobile ? mobileColumns : columns}
             dataSource={sheet}
-            scroll={isMobile ? undefined : { x: 900 }}
+            scroll={isMobile ? undefined : { x: 1000 }}
             tableLayout="fixed"
             size={isMobile ? 'small' : 'middle'}
             className="attendance-table mobile-focused-table"
@@ -464,7 +494,7 @@ const loadBatches = async () => {
         </div>
 
         {historyLoading ? (
-          <ShimmerTable columns={isMobile ? 3 : 7} rows={8} />
+          <ShimmerTable columns={isMobile ? 2 : 6} rows={8} />
         ) : (
           <Table
             rowKey="_id"

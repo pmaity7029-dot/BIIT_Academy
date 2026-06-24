@@ -171,6 +171,7 @@ router.post(
         {
           status: record.status,
           notes: record.notes || '',
+          performanceRating: record.performanceRating || null,
           markedBy: req.user._id
         },
         { new: true, upsert: true, setDefaultsOnInsert: true }
