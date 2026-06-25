@@ -1793,3 +1793,148 @@ a { color: inherit; text-decoration: none; }
     display: none !important;
   }
 }
+
+
+
+
+/* --- ID Card Generation Styles --- */
+.id-card-wrapper {
+  width: 54mm; /* Standard CR80 ID Card width */
+  height: 86mm; /* Standard CR80 ID Card height */
+  background: #ffffff;
+  border: 1px solid #dbe6f4;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(20, 63, 117, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: Arial, sans-serif;
+  color: #172033;
+}
+
+.id-card-header {
+  background: linear-gradient(135deg, #143f75, #0f2e55);
+  color: #ffffff;
+  text-align: center;
+  padding: 10px 0;
+  border-bottom: 3px solid #f5a623;
+}
+
+.id-card-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.id-card-header p {
+  margin: 2px 0 0;
+  font-size: 8px;
+  opacity: 0.9;
+}
+
+.id-card-body {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: radial-gradient(circle at center, #ffffff 0%, #f8fbff 100%);
+}
+
+.id-photo-box {
+  width: 25mm;
+  height: 30mm;
+  border: 2px solid #143f75;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf2f7;
+}
+
+.id-photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.id-photo-placeholder {
+  font-size: 36px;
+  color: #a0aec0;
+}
+
+.id-student-name {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f2e55;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.id-student-course {
+  margin: 0 0 10px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #f5a623;
+  text-align: center;
+  background: #fff6e5;
+  padding: 3px 8px;
+  border-radius: 99px;
+}
+
+.id-details {
+  width: 100%;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.id-detail-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+}
+
+.id-detail-row span {
+  color: #4a5568;
+}
+
+.id-detail-row strong {
+  color: #1a202c;
+  text-align: right;
+}
+
+.id-card-footer {
+  background: #f1f5f9;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 38px;
+}
+
+.signature-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signature-line {
+  width: 40px;
+  height: 1px;
+  background: #172033;
+  margin-bottom: 4px;
+}
+
+.signature-box span {
+  font-size: 7px;
+  font-weight: 600;
+  color: #4a5568;
+}

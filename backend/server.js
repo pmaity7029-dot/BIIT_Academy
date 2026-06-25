@@ -12,6 +12,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import certificateRoutes from './routes/certificateRoutes.js';
 import mailRoutes from './routes/mailRoutes.js';
 import performanceRoutes from './routes/performanceRoutes.js';
+import idCardRoutes from './routes/idCardRoutes.js';
 
 dotenv.config();
 
@@ -26,10 +27,12 @@ app.use(
   })
 );
 
+// 1. MIDDLEWARES (Yeh sabse upar hone chahiye routes se pehle)
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// 2. HEALTH ROUTE
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -37,6 +40,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// 3. ALL API ROUTES (Sab idhar hone chahiye JSON middleware ke baad)
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
@@ -46,6 +50,10 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/mail', mailRoutes);
 app.use('/api/performance', performanceRoutes);
 
+// YAHAN SHIFT KIYA HAI ID CARD ROUTE KO:
+app.use('/api/id-cards', idCardRoutes);
+
+// 4. ERROR HANDLERS
 app.use(notFound);
 app.use(errorHandler);
 

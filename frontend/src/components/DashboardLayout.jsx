@@ -1,6 +1,7 @@
 import { Avatar, Button, Drawer, Grid, Layout, Menu, Typography } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import { FiUser } from 'react-icons/fi';
 import {
   FiAward,
   FiBarChart2,
@@ -27,7 +28,8 @@ const menuItems = [
     children: [
       { key: '/admin/students', icon: <FiUsers />, label: 'All Students' },
       { key: '/admin/attendance', icon: <FiCalendar />, label: 'Attendance' },
-      { key: '/admin/performance', icon: <FiBarChart2 />, label: 'Performance' }
+      { key: '/admin/performance', icon: <FiBarChart2 />, label: 'Performance' },
+      { key: '/admin/id-cards', icon: <FiUser />, label: 'ID Cards' } // NEW MENU ITEM
     ]
   },
   {

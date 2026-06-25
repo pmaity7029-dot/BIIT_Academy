@@ -17,6 +17,8 @@ import Payments from './pages/Payments.jsx';
 import Certificates from './pages/Certificates.jsx';
 import Messages from './pages/Messages.jsx';
 
+import IdCards from './pages/IdCards.jsx';
+
 const routerFutureFlags = {
   v7_startTransition: true,
   v7_relativeSplatPath: true
@@ -76,6 +78,7 @@ export default function App() {
           <Route path="courses" element={<Courses />} />
           <Route path="payments" element={<Payments />} />
           <Route path="certificates" element={<Certificates />} />
+          <Route path="id-cards" element={<IdCards />} /> {/* NEW ROUTE */}
           <Route path="messages" element={<Messages />} />
         </Route>
 

@@ -12,6 +12,7 @@ const studentSchema = new mongoose.Schema(
     email: { type: String, trim: true, lowercase: true },
     address: { type: String, trim: true },
     batch: { type: String, default: 'Default Batch', trim: true },
+    photo: { type: String, default: '' }, // NEW: Photo field for ID Card
     enrolledDate: { type: Date, default: Date.now },
     status: { type: String, enum: ['Active', 'Inactive', 'Completed'], default: 'Active' },
     notes: { type: String, trim: true }
