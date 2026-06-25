@@ -11,6 +11,8 @@ import {
   Space,
   Table,
   Tag,
+  Tabs,
+  Typography,
   message,
 } from "antd";
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +22,8 @@ import {
   FiPrinter,
   FiSearch,
   FiTrash2,
+  FiDownload,
+  FiSettings
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import api from "../api/client.js";
@@ -96,66 +100,157 @@ const statusColor = (status) => {
   return "default";
 };
 
+// Excel / CSV Export Utility
+const exportToCSV = (data, columns, filename) => {
+  if (!data || !data.length) {
+    message.warning('No data to export');
+    return;
+  }
+  const exportCols = columns.filter(c => c.title !== 'Action');
+  const headers = exportCols.map(c => c.title).join(',');
+  const rows = data.map(row => {
+    return exportCols.map(c => {
+      let val = '';
+      if (c.exportRender) {
+         val = c.exportRender(row);
+      } else if (c.dataIndex) {
+        if (Array.isArray(c.dataIndex)) {
+          val = c.dataIndex.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : ''), row);
+        } else {
+          val = row[c.dataIndex];
+        }
+      }
+      if (val === null || val === undefined) val = '';
+      const escaped = String(val).replace(/"/g, '""');
+      return `"${escaped}"`;
+    }).join(',');
+  });
+  const csv = [headers, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+};
+
 export default function Payments() {
   const [payments, setPayments] = useState([]);
+  const [duesData, setDuesData] = useState([]);
   const [students, setStudents] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
   const [selected, setSelected] = useState(null);
+  
   const [open, setOpen] = useState(false);
+  const [settingOpen, setSettingOpen] = useState(false);
+  
   const [filters, setFilters] = useState({ search: "", mode: "", status: "" });
+  const [duesFilters, setDuesFilters] = useState({ month: dayjs(), status: "", batch: "", search: "" });
+  const [perDayFine, setPerDayFine] = useState(10);
+  
   const [loading, setLoading] = useState(false);
+  const [duesLoading, setDuesLoading] = useState(false);
+  
   const [form] = Form.useForm();
+  const [settingForm] = Form.useForm();
   const receiptRef = useRef(null);
 
-  const load = async (nextFilters = filters) => {
+  const loadData = async (nextFilters = filters) => {
     setLoading(true);
     try {
-      const [paymentRes, studentRes] = await Promise.all([
+      const [paymentRes, studentRes, batchRes, settingRes] = await Promise.all([
         api.get("/payments", { params: nextFilters }),
         api.get("/students"),
+        api.get('/courses/batches/list'),
+        api.get('/payments/settings')
       ]);
       setPayments(paymentRes.data);
       setStudents(studentRes.data);
+      setBatchOptions(batchRes.data.map(b => b.name).filter(Boolean));
+      setPerDayFine(settingRes.data.perDayFine || 0);
+      settingForm.setFieldsValue({ perDayFine: settingRes.data.perDayFine || 0 });
+      
       if (!selected && paymentRes.data[0]) setSelected(paymentRes.data[0]);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadDues = async (nextFilters = duesFilters) => {
+    setDuesLoading(true);
+    try {
+      const { data } = await api.get('/payments/dues', {
+        params: {
+          month: nextFilters.month.format('YYYY-MM'),
+          status: nextFilters.status,
+          batch: nextFilters.batch,
+          search: nextFilters.search
+        }
+      });
+      setDuesData(data);
+    } catch (error) {
+      message.error('Failed to load dues tracking data');
+    } finally {
+      setDuesLoading(false);
+    }
+  };
+
   useEffect(() => {
-    load().catch(() => message.error("Payments loading failed"));
+    loadData().catch(() => message.error("Payments loading failed"));
+    loadDues().catch(() => message.error("Dues loading failed"));
   }, []);
 
-  const save = async () => {
+  const savePayment = async () => {
     try {
       const values = await form.validateFields();
-      const { data } = await api.post("/payments", {
+      const payload = {
         ...values,
+        month: values.month ? values.month.format('YYYY-MM') : dayjs().format('YYYY-MM'),
         paidDate: values.paidDate?.toISOString(),
-      });
+      };
+      const { data } = await api.post("/payments", payload);
       message.success("Payment receipt generated");
       setOpen(false);
       form.resetFields();
       setSelected(data);
-      load();
+      loadData(filters);
+      loadDues(duesFilters);
     } catch (error) {
       if (!error.errorFields) message.error("Payment save failed");
+    }
+  };
+
+  const saveSetting = async () => {
+    try {
+      const values = await settingForm.validateFields();
+      await api.put('/payments/settings', { perDayFine: values.perDayFine });
+      message.success('Fine settings updated');
+      setPerDayFine(values.perDayFine);
+      setSettingOpen(false);
+      loadDues(duesFilters);
+    } catch (error) {
+      if (!error.errorFields) message.error("Setting save failed");
     }
   };
 
   const applyFilter = (patch) => {
     const nextFilters = { ...filters, ...patch };
     setFilters(nextFilters);
-    load(nextFilters).catch(() => message.error("Payments loading failed"));
+    loadData(nextFilters).catch(() => message.error("Payments loading failed"));
+  };
+
+  const applyDuesFilter = (patch) => {
+    const nextFilters = { ...duesFilters, ...patch };
+    setDuesFilters(nextFilters);
+    loadDues(nextFilters);
   };
 
   const updatePaymentStatus = async (payment, status) => {
     try {
       const { data } = await api.put(`/payments/${payment._id}`, { status });
       message.success("Payment status updated");
-      setPayments((prev) =>
-        prev.map((item) => (item._id === payment._id ? data : item)),
-      );
+      setPayments((prev) => prev.map((item) => (item._id === payment._id ? data : item)));
       if (selected?._id === payment._id) setSelected(data);
+      loadDues(duesFilters);
     } catch (error) {
       message.error(error?.response?.data?.message || "Status update failed");
     }
@@ -166,10 +261,35 @@ export default function Payments() {
       await api.delete(`/payments/${payment._id}`);
       message.success("Payment deleted");
       if (selected?._id === payment._id) setSelected(null);
-      load();
+      loadData(filters);
+      loadDues(duesFilters);
     } catch (error) {
       message.error(error?.response?.data?.message || "Payment delete failed");
     }
+  };
+
+  const openPaymentModal = (dueRow = null) => {
+    if (dueRow) {
+      form.setFieldsValue({
+        student: dueRow.student._id,
+        amount: dueRow.baseFee,
+        fine: dueRow.fine,
+        month: dayjs(dueRow.month, 'YYYY-MM'),
+        mode: "Cash",
+        status: "Paid",
+        paidDate: dayjs(),
+        description: ""
+      });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({
+        mode: "Cash",
+        status: "Paid",
+        paidDate: dayjs(),
+        month: dayjs()
+      });
+    }
+    setOpen(true);
   };
 
   const printReceipt = () => {
@@ -186,6 +306,7 @@ export default function Payments() {
     {
       title: "Student",
       width: 175,
+      exportRender: (row) => `${row.student?.name} (${row.student?.regNo})`,
       render: (_, row) => (
         <div>
           <strong>{row.student?.name}</strong>
@@ -195,12 +316,24 @@ export default function Payments() {
       ),
     },
     {
-      title: "Amount",
+      title: "Base Fee",
       dataIndex: "amount",
-      width: 140,
-      render: (value) => (
-        <strong>INR {Number(value || 0).toLocaleString("en-IN")}</strong>
-      ),
+      width: 120,
+      exportRender: (row) => row.amount || 0,
+      render: (value) => <strong>₹{Number(value || 0).toLocaleString("en-IN")}</strong>,
+    },
+    {
+      title: "Late Fine",
+      dataIndex: "fine",
+      width: 120,
+      exportRender: (row) => row.fine || 0,
+      render: (value) => <span style={{ color: value > 0 ? '#cf1322' : 'inherit' }}>₹{Number(value || 0).toLocaleString("en-IN")}</span>,
+    },
+    {
+      title: "Total",
+      width: 120,
+      exportRender: (row) => (row.amount || 0) + (row.fine || 0),
+      render: (_, row) => <Tag color="green">₹{Number((row.amount || 0) + (row.fine || 0)).toLocaleString("en-IN")}</Tag>,
     },
     {
       title: "Mode",
@@ -223,23 +356,24 @@ export default function Payments() {
         />
       ),
     },
-    { title: "Month", dataIndex: "month", width: 135 },
+    { title: "Month", dataIndex: "month", width: 110 },
     {
       title: "Date",
       dataIndex: "paidDate",
       width: 135,
+      exportRender: (row) => dayjs(row.paidDate).format('DD MMM YYYY'),
       render: (date) => dayjs(date).format("DD MMM YYYY"),
     },
     {
       title: "Action",
-      width: 165,
+      width: 135,
       render: (_, row) => (
         <Space>
           <Button icon={<FiPrinter />} onClick={() => setSelected(row)}>
-            Receipt
+            Print
           </Button>
           <Popconfirm
-            title="Delete this payment?"
+            title="Delete payment?"
             okText="Delete"
             okButtonProps={{ danger: true }}
             onConfirm={() => deletePayment(row)}
@@ -251,15 +385,74 @@ export default function Payments() {
     },
   ];
 
+  const duesColumns = [
+    {
+      title: "Student",
+      width: 200,
+      exportRender: (row) => `${row.student?.name} (${row.student?.regNo})`,
+      render: (_, row) => (
+        <div>
+          <strong>{row.student?.name}</strong>
+          <br />
+          <span className="muted-text">{row.student?.regNo}</span>
+        </div>
+      ),
+    },
+    { title: "Batch", dataIndex: ["student", "batch"], width: 180 },
+    {
+      title: "Base Fee",
+      dataIndex: "baseFee",
+      width: 110,
+      render: (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`,
+    },
+    {
+      title: "Late Days",
+      dataIndex: "daysLate",
+      width: 100,
+      render: (value) => <span style={{ color: value > 0 ? '#cf1322' : 'inherit' }}>{value > 0 ? `${value} Days` : '-'}</span>
+    },
+    {
+      title: "Calculated Fine",
+      dataIndex: "fine",
+      width: 130,
+      render: (value) => <span style={{ color: value > 0 ? '#cf1322' : 'inherit' }}>₹{Number(value || 0).toLocaleString("en-IN")}</span>,
+    },
+    {
+      title: "Total Amount",
+      dataIndex: "totalAmount",
+      width: 130,
+      render: (value) => <strong>₹{Number(value || 0).toLocaleString("en-IN")}</strong>,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      width: 110,
+      render: (status) => <Tag color={statusColor(status)}>{status}</Tag>,
+    },
+    {
+      title: "Action",
+      width: 120,
+      render: (_, row) => (
+        <Button 
+          type="primary" 
+          disabled={row.status === 'Paid'} 
+          onClick={() => openPaymentModal(row)}
+        >
+          {row.status === 'Paid' ? 'Paid' : 'Pay Now'}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div>
       <PageHeader
         icon={<FiCreditCard />}
         title="Payments & Receipts"
-        subtitle="Record fees, generate and print payment receipts"
-        actionText="Add Payment"
+        subtitle="Manage month-wise dues, calculate fines automatically, and print receipts"
+        actionText="Manual Payment"
         actionIcon={<FiPlus />}
-        onAction={() => setOpen(true)}
+        onAction={() => openPaymentModal()}
       />
 
       {selected && (
@@ -322,10 +515,20 @@ export default function Payments() {
               <span>Description</span>
               <strong>{selected.description || "Course fee"}</strong>
             </div>
+            <div className="receipt-row">
+              <span>Base Fee</span>
+              <strong>INR {Number(selected.amount || 0).toLocaleString("en-IN")}</strong>
+            </div>
+            {selected.fine > 0 && (
+              <div className="receipt-row">
+                <span>Late Fine</span>
+                <strong style={{ color: '#cf1322' }}>INR {Number(selected.fine || 0).toLocaleString("en-IN")}</strong>
+              </div>
+            )}
             <div className="amount-box">
-              <span>Amount Paid</span>
+              <span>Total Amount Paid</span>
               <strong>
-                INR {Number(selected.amount || 0).toLocaleString("en-IN")}
+                INR {Number((selected.amount || 0) + (selected.fine || 0)).toLocaleString("en-IN")}
               </strong>
             </div>
             <div className="receipt-footer">
@@ -336,72 +539,152 @@ export default function Payments() {
         </Card>
       )}
 
-      <Card className="content-card" bordered={false} title="Payment History">
-        <div className="section-toolbar compact-toolbar">
-          <Space wrap>
-            <Input.Search
-              allowClear
-              enterButton={<FiSearch />}
-              placeholder="Search receipt, student, reg no, month..."
-              value={filters.search}
-              onChange={(event) => applyFilter({ search: event.target.value })}
-              onSearch={(value) => applyFilter({ search: value })}
-              className="live-search-input"
-              style={{ width: 340 }}
-            />
-            <Select
-              allowClear
-              placeholder="Mode"
-              value={filters.mode || undefined}
-              onChange={(value) => applyFilter({ mode: value || "" })}
-              options={paymentModes}
-              style={{ width: 160 }}
-            />
-            <Select
-              allowClear
-              placeholder="Status"
-              value={filters.status || undefined}
-              onChange={(value) => applyFilter({ status: value || "" })}
-              options={paymentStatuses}
-              style={{ width: 160 }}
-            />
-            <Button
-              onClick={() => applyFilter({ search: "", mode: "", status: "" })}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-        {loading ? (
-          <ShimmerTable columns={8} rows={7} />
-        ) : (
-          <Table
-            rowKey="_id"
-            columns={columns}
-            dataSource={payments}
-            scroll={{ x: "max-content" }}
-            tableLayout="auto"
-          />
-        )}
+      <Card className="content-card" bordered={false}>
+        <Tabs
+          items={[
+            {
+              key: 'dues',
+              label: 'Monthly Dues Tracking',
+              children: (
+                <div>
+                  <div className="section-toolbar compact-toolbar" style={{ justifyContent: 'space-between' }}>
+                    <Space wrap>
+                      <DatePicker
+                        picker="month"
+                        allowClear={false}
+                        value={duesFilters.month}
+                        onChange={(val) => applyDuesFilter({ month: val || dayjs() })}
+                        format="MMM-YYYY"
+                      />
+                      <Select
+                        allowClear
+                        placeholder="Batch"
+                        value={duesFilters.batch || undefined}
+                        onChange={(value) => applyDuesFilter({ batch: value || "" })}
+                        options={batchOptions.map(b => ({ value: b, label: b }))}
+                        style={{ width: 180 }}
+                      />
+                      <Select
+                        allowClear
+                        placeholder="Status"
+                        value={duesFilters.status || undefined}
+                        onChange={(value) => applyDuesFilter({ status: value || "" })}
+                        options={[{ value: 'Paid' }, { value: 'Due' }]}
+                        style={{ width: 140 }}
+                      />
+                      <Input.Search
+                        allowClear
+                        enterButton={<FiSearch />}
+                        placeholder="Search student, reg no..."
+                        value={duesFilters.search}
+                        onChange={(event) => applyDuesFilter({ search: event.target.value })}
+                        onSearch={(value) => applyDuesFilter({ search: value })}
+                        className="live-search-input"
+                        style={{ width: 280 }}
+                      />
+                    </Space>
+                    
+                    <Space wrap>
+                       <Button icon={<FiSettings />} onClick={() => setSettingOpen(true)}>
+                          Fine Config: ₹{perDayFine}/day
+                       </Button>
+                       <Button 
+                          icon={<FiDownload />} 
+                          onClick={() => exportToCSV(duesData, duesColumns, `Monthly_Dues_${duesFilters.month.format('YYYY_MM')}.csv`)}
+                        >
+                          Export Excel
+                       </Button>
+                    </Space>
+                  </div>
+                  {duesLoading ? (
+                    <ShimmerTable columns={7} rows={7} />
+                  ) : (
+                    <Table
+                      rowKey="key"
+                      columns={duesColumns}
+                      dataSource={duesData}
+                      scroll={{ x: "max-content" }}
+                      tableLayout="auto"
+                    />
+                  )}
+                </div>
+              )
+            },
+            {
+              key: 'history',
+              label: 'Payment History',
+              children: (
+                <div>
+                  <div className="section-toolbar compact-toolbar" style={{ justifyContent: 'space-between' }}>
+                    <Space wrap>
+                      <Input.Search
+                        allowClear
+                        enterButton={<FiSearch />}
+                        placeholder="Search receipt, student, month..."
+                        value={filters.search}
+                        onChange={(event) => applyFilter({ search: event.target.value })}
+                        onSearch={(value) => applyFilter({ search: value })}
+                        className="live-search-input"
+                        style={{ width: 340 }}
+                      />
+                      <Select
+                        allowClear
+                        placeholder="Mode"
+                        value={filters.mode || undefined}
+                        onChange={(value) => applyFilter({ mode: value || "" })}
+                        options={paymentModes}
+                        style={{ width: 140 }}
+                      />
+                      <Select
+                        allowClear
+                        placeholder="Status"
+                        value={filters.status || undefined}
+                        onChange={(value) => applyFilter({ status: value || "" })}
+                        options={paymentStatuses}
+                        style={{ width: 140 }}
+                      />
+                      <Button onClick={() => applyFilter({ search: "", mode: "", status: "" })}>
+                        Reset
+                      </Button>
+                    </Space>
+                    <Button 
+                      icon={<FiDownload />} 
+                      onClick={() => exportToCSV(payments, columns, `Payment_History.csv`)}
+                    >
+                      Export Excel
+                    </Button>
+                  </div>
+                  {loading ? (
+                    <ShimmerTable columns={8} rows={7} />
+                  ) : (
+                    <Table
+                      rowKey="_id"
+                      columns={columns}
+                      dataSource={payments}
+                      scroll={{ x: "max-content" }}
+                      tableLayout="auto"
+                    />
+                  )}
+                </div>
+              )
+            }
+          ]}
+        />
       </Card>
 
       <Modal
-        title="Add Payment"
+        title="Payment Collection"
         open={open}
         onCancel={() => setOpen(false)}
-        onOk={save}
+        onOk={savePayment}
         okText="Generate Receipt"
       >
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ mode: "UPI", status: "Paid", paidDate: dayjs() }}
+          initialValues={{ mode: "Cash", status: "Paid", paidDate: dayjs(), month: dayjs(), amount: 0, fine: 0 }}
         >
-          <Form.Item
-            name="student"
-            label="Student"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="student" label="Student" rules={[{ required: true }]}>
             <Select
               showSearch
               optionFilterProp="label"
@@ -411,8 +694,21 @@ export default function Payments() {
               }))}
             />
           </Form.Item>
-          <Form.Item name="amount" label="Amount" rules={[{ required: true }]}>
-            <InputNumber min={1} className="full-width" />
+          
+          <Space className="full-width" size="large">
+            <Form.Item name="amount" label="Base Fee Amount" rules={[{ required: true }]}>
+              <InputNumber min={0} className="full-width" />
+            </Form.Item>
+            <Form.Item name="fine" label="Late Fine Amount" tooltip="Editable fine added to total payment">
+              <InputNumber min={0} className="full-width" />
+            </Form.Item>
+          </Space>
+          <Typography.Text type="secondary" style={{ display: 'block', marginTop: '-14px', marginBottom: '14px' }}>
+             Total collected will be Base Fee + Fine.
+          </Typography.Text>
+
+          <Form.Item name="month" label="For Month" rules={[{ required: true }]}>
+            <DatePicker picker="month" format="YYYY-MM" className="full-width" />
           </Form.Item>
           <Form.Item name="mode" label="Payment Mode">
             <Select options={paymentModes} />
@@ -420,14 +716,25 @@ export default function Payments() {
           <Form.Item name="status" label="Payment Status">
             <Select options={paymentStatuses} />
           </Form.Item>
-          <Form.Item name="month" label="For Month">
-            <Input placeholder="MAY-2026" />
-          </Form.Item>
           <Form.Item name="paidDate" label="Payment Date">
             <DatePicker className="full-width" />
           </Form.Item>
           <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} placeholder="Course fee" />
+            <Input.TextArea rows={2} placeholder="Optional notes" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Fine Configuration"
+        open={settingOpen}
+        onCancel={() => setSettingOpen(false)}
+        onOk={saveSetting}
+        okText="Save Config"
+      >
+        <Form form={settingForm} layout="vertical">
+          <Form.Item name="perDayFine" label="Per Day Late Fine Amount (₹)" extra="This fine is calculated automatically if a student pays after the 5th of the month.">
+            <InputNumber min={0} className="full-width" />
           </Form.Item>
         </Form>
       </Modal>

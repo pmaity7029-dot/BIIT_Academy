@@ -4,7 +4,8 @@ const paymentSchema = new mongoose.Schema(
   {
     receiptNo: { type: String, unique: true, index: true },
     student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
-    amount: { type: Number, required: true, min: 1 },
+    amount: { type: Number, required: true, min: 0 },
+    fine: { type: Number, default: 0 },
     mode: { type: String, enum: ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'], default: 'Cash' },
     status: {
       type: String,
