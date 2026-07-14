@@ -14,6 +14,8 @@ router.get('/overview', asyncHandler(async (req, res) => {
   const { search = '', batch = '' } = req.query;
   const studentQuery = { status: 'Active' };
 
+  if (req.user.role === 'FRANCHISE') studentQuery.branch = req.user.branch;
+
   if (batch) {
     studentQuery.batch = buildRegex(batch);
   }

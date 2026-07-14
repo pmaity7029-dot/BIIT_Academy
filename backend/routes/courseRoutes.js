@@ -2,13 +2,12 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import Course from '../models/Course.js';
 import Batch from '../models/Batch.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 router.use(protect);
 
 const buildSearchRegex = (search) => new RegExp(String(search || '').trim(), 'i');
-
 const LEGACY_LOCATION_FIELD = ['cen', 'tre'].join('');
 
 const sanitizeBatchPayload = (payload = {}) => {
@@ -34,11 +33,11 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(await Course.find(query).sort({ createdAt: -1 }));
 }));
 
-router.post('/', asyncHandler(async (req, res) => {
+router.post('/', adminOnly, asyncHandler(async (req, res) => {
   res.status(201).json(await Course.create(req.body));
 }));
 
-router.put('/:id', asyncHandler(async (req, res) => {
+router.put('/:id', adminOnly, asyncHandler(async (req, res) => {
   const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
   if (!course) {
     res.status(404);
@@ -47,7 +46,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
   res.json(course);
 }));
 
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', adminOnly, asyncHandler(async (req, res) => {
   const course = await Course.findByIdAndDelete(req.params.id);
   if (!course) {
     res.status(404);
@@ -73,11 +72,11 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
   res.json(await Batch.find(query).populate('course').sort({ createdAt: -1 }));
 }));
 
-router.post('/batches', asyncHandler(async (req, res) => {
+router.post('/batches', adminOnly, asyncHandler(async (req, res) => {
   res.status(201).json(await Batch.create(sanitizeBatchPayload(req.body)));
 }));
 
-router.put('/batches/:id', asyncHandler(async (req, res) => {
+router.put('/batches/:id', adminOnly, asyncHandler(async (req, res) => {
   const batch = await Batch.findByIdAndUpdate(req.params.id, sanitizeBatchPayload(req.body), { new: true, runValidators: true }).populate('course');
   if (!batch) {
     res.status(404);
@@ -86,7 +85,7 @@ router.put('/batches/:id', asyncHandler(async (req, res) => {
   res.json(batch);
 }));
 
-router.delete('/batches/:id', asyncHandler(async (req, res) => {
+router.delete('/batches/:id', adminOnly, asyncHandler(async (req, res) => {
   const batch = await Batch.findByIdAndDelete(req.params.id);
   if (!batch) {
     res.status(404);

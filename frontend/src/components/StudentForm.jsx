@@ -1,6 +1,11 @@
 import { DatePicker, Form, Input, Select } from 'antd';
 import React from "react";
+import { useAuth } from '../context/AuthContext.jsx';
+
 export default function StudentForm({ form, batchOptions = [] }) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   return (
     <Form form={form} layout="vertical" className="form-grid">
       <Form.Item name="name" label="Student Name" rules={[{ required: true, message: 'Student name is required' }]}>
@@ -42,7 +47,14 @@ export default function StudentForm({ form, batchOptions = [] }) {
           }))}
         />
       </Form.Item>
-      <Form.Item name="address" label="Address" className="grid-span-2">
+      
+      {isAdmin && (
+        <Form.Item name="branch" label="Branch / Centre" initialValue="Main Branch" className="grid-span-2">
+          <Input placeholder="e.g. Main Branch, BIIT Khejuri" />
+        </Form.Item>
+      )}
+
+      <Form.Item name="address" label="Address" className={isAdmin ? "" : "grid-span-2"}>
         <Input.TextArea rows={3} placeholder="Enter address" />
       </Form.Item>
     </Form>

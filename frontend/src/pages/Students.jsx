@@ -1,16 +1,4 @@
-import {
-  Button,
-  Card,
-  Drawer,
-  Form,
-  Grid,
-  Input,
-  Popconfirm,
-  Select,
-  Space,
-  Table,
-  message
-} from 'antd';
+import { Button, Card, Drawer, Form, Grid, Input, Popconfirm, Select, Space, Table, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from 'react-icons/fi';
@@ -23,7 +11,6 @@ import React from 'react';
 
 const studentStatusOptions = ['Active', 'Inactive', 'Completed'].map((value) => ({ value }));
 
-
 const cleanParams = (params) => {
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => value !== '' && value !== null && value !== undefined)
@@ -33,7 +20,6 @@ const cleanParams = (params) => {
 export default function Students() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-
   const [students, setStudents] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,24 +31,12 @@ export default function Students() {
     navigate(`/admin/students/${studentId}`);
   };
 
-  const [filters, setFilters] = useState({
-    search: '',
-    status: '',
-    batch: ''
-  });
+  const [filters, setFilters] = useState({ search: '', status: '', batch: '' });
 
   const loadBatches = async () => {
     try {
-      // Sirf official Batches database se batches fetch karega
       const { data } = await api.get('/courses/batches/list');
-      
-      const validBatches = (data || [])
-        // Optional: Agar aap chahein ki sirf 'Active' ya 'Running' batches hi dikhein, 
-        // toh niche wali line ko uncomment kar sakte hain:
-        // .filter(batch => batch.status === 'Active' || batch.status === 'Running')
-        .map((batch) => batch.name)
-        .filter(Boolean);
-
+      const validBatches = (data || []).map((batch) => batch.name).filter(Boolean);
       setBatchOptions(validBatches.sort((a, b) => String(a).localeCompare(String(b))));
     } catch (error) {
       setBatchOptions([]);
@@ -72,11 +46,7 @@ export default function Students() {
   const load = async (nextFilters = filters) => {
     try {
       setLoading(true);
-
-      const { data } = await api.get('/students', {
-        params: cleanParams(nextFilters)
-      });
-
+      const { data } = await api.get('/students', { params: cleanParams(nextFilters) });
       setStudents(data);
     } catch (error) {
       message.error('Unable to load students');
@@ -93,13 +63,7 @@ export default function Students() {
   const submit = async () => {
     try {
       const values = await form.validateFields();
-
-      await api.post('/students', {
-        ...values,
-        dob: values.dob?.toISOString(),
-        enrolledDate: values.enrolledDate?.toISOString()
-      });
-
+      await api.post('/students', { ...values, dob: values.dob?.toISOString(), enrolledDate: values.enrolledDate?.toISOString() });
       message.success('Student enrolled successfully');
       form.resetFields();
       setOpen(false);
@@ -119,12 +83,7 @@ export default function Students() {
   };
 
   const resetFilters = () => {
-    const nextFilters = {
-      search: '',
-      status: '',
-      batch: ''
-    };
-
+    const nextFilters = { search: '', status: '', batch: '' };
     setFilters(nextFilters);
     load(nextFilters);
   };
@@ -132,12 +91,8 @@ export default function Students() {
   const updateStudentStatus = async (student, status) => {
     try {
       const { data } = await api.put(`/students/${student._id}`, { status });
-
       message.success('Student status updated');
-
-      setStudents((prev) =>
-        prev.map((item) => (item._id === student._id ? data : item))
-      );
+      setStudents((prev) => prev.map((item) => (item._id === student._id ? data : item)));
     } catch (error) {
       message.error(error?.response?.data?.message || 'Status update failed');
     }
@@ -146,7 +101,6 @@ export default function Students() {
   const deleteStudent = async (student) => {
     try {
       await api.delete(`/students/${student._id}`);
-
       message.success('Student deleted');
       load();
       loadBatches();
@@ -163,11 +117,7 @@ export default function Students() {
       dataIndex: 'name',
       width: 240,
       render: (text, row) => (
-        <Button
-          type="link"
-          className="table-student-link"
-          onClick={() => openStudentDetails(row._id)}
-        >
+        <Button type="link" className="table-student-link" onClick={() => openStudentDetails(row._id)}>
           <span className="student-cell">
             <strong>{text}</strong>
             <span className="muted-text">{row.regNo}</span>
@@ -175,17 +125,9 @@ export default function Students() {
         </Button>
       )
     },
-    {
-      title: 'Phone',
-      dataIndex: 'phone',
-      width: 140
-    },
-    {
-      title: 'Batch',
-      dataIndex: 'batch',
-      width: 210,
-      ellipsis: true
-    },
+    { title: 'Phone', dataIndex: 'phone', width: 140 },
+    { title: 'Branch', dataIndex: 'branch', width: 140 },
+    { title: 'Batch', dataIndex: 'batch', width: 210, ellipsis: true },
     {
       title: 'Status',
       dataIndex: 'status',
@@ -201,30 +143,16 @@ export default function Students() {
         />
       )
     },
-    {
-      title: 'Enrolled',
-      dataIndex: 'enrolledDate',
-      width: 135,
-      render: (date) => dayjs(date).format('DD MMM YYYY')
-    },
+    { title: 'Enrolled', dataIndex: 'enrolledDate', width: 135, render: (date) => dayjs(date).format('DD MMM YYYY') },
     {
       title: 'Actions',
       width: 165,
       render: (_, row) => (
         <Space>
-          <Button
-            icon={<FiEye />}
-            onClick={() => openStudentDetails(row._id)}
-          >
+          <Button icon={<FiEye />} onClick={() => openStudentDetails(row._id)}>
             View
           </Button>
-
-          <Popconfirm
-            title="Delete this student?"
-            okText="Delete"
-            okButtonProps={{ danger: true }}
-            onConfirm={() => deleteStudent(row)}
-          >
+          <Popconfirm title="Delete this student?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteStudent(row)}>
             <Button danger icon={<FiTrash2 />} />
           </Popconfirm>
         </Space>
@@ -237,11 +165,7 @@ export default function Students() {
       title: 'Student',
       dataIndex: 'name',
       render: (text, row) => (
-        <Button
-          type="link"
-          className="table-student-link mobile-student-name-link"
-          onClick={() => openStudentDetails(row._id)}
-        >
+        <Button type="link" className="table-student-link mobile-student-name-link" onClick={() => openStudentDetails(row._id)}>
           <span className="student-cell">
             <strong>{text}</strong>
             <span className="muted-text">{row.regNo}</span>
@@ -249,11 +173,7 @@ export default function Students() {
         </Button>
       )
     },
-    {
-      title: 'Batch',
-      dataIndex: 'batch',
-      ellipsis: true
-    }
+    { title: 'Batch', dataIndex: 'batch', ellipsis: true }
   ];
 
   return (
@@ -270,42 +190,10 @@ export default function Students() {
       <Card className="content-card students-card" variant="borderless">
         <div className="section-toolbar">
           <strong>All Students ({filteredStudents.length})</strong>
-
           <Space wrap>
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Search batch"
-              style={{ width: 250 }}
-              value={filters.batch || undefined}
-              onChange={(value) => applyFilters({ batch: value || '' })}
-              options={batchOptions.map((batch) => ({
-                value: batch,
-                label: batch
-              }))}
-            />
-
-            <Select
-              allowClear
-              placeholder="Status"
-              style={{ width: 170 }}
-              value={filters.status || undefined}
-              onChange={(value) => applyFilters({ status: value || '' })}
-              options={studentStatusOptions}
-            />
-
-            <Input.Search
-              placeholder="Search name, reg no, phone, email, batch..."
-              allowClear
-              enterButton={<FiSearch />}
-              value={filters.search}
-              onChange={(event) => applyFilters({ search: event.target.value })}
-              onSearch={(value) => applyFilters({ search: value })}
-              className="live-search-input"
-              style={{ width: 380 }}
-            />
-
+            <Select allowClear showSearch optionFilterProp="label" placeholder="Search batch" style={{ width: 250 }} value={filters.batch || undefined} onChange={(value) => applyFilters({ batch: value || '' })} options={batchOptions.map((batch) => ({ value: batch, label: batch }))} />
+            <Select allowClear placeholder="Status" style={{ width: 170 }} value={filters.status || undefined} onChange={(value) => applyFilters({ status: value || '' })} options={studentStatusOptions} />
+            <Input.Search placeholder="Search name, reg no, phone, email, batch..." allowClear enterButton={<FiSearch />} value={filters.search} onChange={(event) => applyFilters({ search: event.target.value })} onSearch={(value) => applyFilters({ search: value })} className="live-search-input" style={{ width: 380 }} />
             <Button onClick={resetFilters}>Reset</Button>
           </Space>
         </div>
@@ -313,32 +201,11 @@ export default function Students() {
         {loading ? (
           <ShimmerTable columns={isMobile ? 2 : 6} rows={8} />
         ) : (
-          <Table
-            rowKey="_id"
-            columns={isMobile ? mobileColumns : columns}
-            dataSource={filteredStudents}
-            scroll={isMobile ? undefined : { x: 1045 }}
-            tableLayout="fixed"
-            size={isMobile ? 'small' : 'middle'}
-            className="students-table mobile-focused-table"
-          />
+          <Table rowKey="_id" columns={isMobile ? mobileColumns : columns} dataSource={filteredStudents} scroll={isMobile ? undefined : { x: 1045 }} tableLayout="fixed" size={isMobile ? 'small' : 'middle'} className="students-table mobile-focused-table" />
         )}
       </Card>
 
-      <Drawer
-        title="Enroll New Student"
-        width={780}
-        open={open}
-        onClose={() => setOpen(false)}
-        extra={
-          <Space>
-            <Button onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="primary" onClick={submit}>
-              Save Student
-            </Button>
-          </Space>
-        }
-      >
+      <Drawer title="Enroll New Student" width={780} open={open} onClose={() => setOpen(false)} extra={<Space><Button onClick={() => setOpen(false)}>Cancel</Button><Button type="primary" onClick={submit}>Save Student</Button></Space>}>
         <StudentForm form={form} batchOptions={batchOptions} />
       </Drawer>
     </div>

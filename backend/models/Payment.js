@@ -14,6 +14,7 @@ const paymentSchema = new mongoose.Schema(
     },
     month: { type: String, trim: true },
     description: { type: String, trim: true },
+    branch: { type: String, trim: true, default: 'Main Branch' },
     paidDate: { type: Date, default: Date.now },
     collectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   },

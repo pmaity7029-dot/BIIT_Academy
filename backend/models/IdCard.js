@@ -10,7 +10,8 @@ const idCardSchema = new mongoose.Schema(
     phone: { type: String, required: true, trim: true },
     bloodGroup: { type: String, trim: true, default: 'O+' },
     validUntil: { type: String, trim: true, default: 'Dec 2026' },
-    photo: { type: String, default: '' } // Cloudinary Hosted URL String
+    photo: { type: String, default: '' },
+    branch: { type: String, trim: true, default: 'Main Branch' }
   },
   { timestamps: true }
 );

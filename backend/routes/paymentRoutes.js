@@ -9,7 +9,6 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.use(protect);
 
-// Fine Settings
 router.get('/settings', asyncHandler(async (req, res) => {
   let setting = await Setting.findOne();
   if (!setting) {
@@ -29,7 +28,6 @@ router.put('/settings', asyncHandler(async (req, res) => {
   res.json(setting);
 }));
 
-// Due tracking & Fine Calculation
 router.get('/dues', asyncHandler(async (req, res) => {
   const { month, status, batch, search } = req.query; 
 
@@ -42,7 +40,6 @@ router.get('/dues', asyncHandler(async (req, res) => {
   const year = parseInt(yearStr, 10);
   const monthIndex = parseInt(monthStr, 10) - 1;
 
-  // 5th of the requested month
   const dueMonthDate = new Date(year, monthIndex, 5);
   dueMonthDate.setHours(23, 59, 59, 999);
   
@@ -56,6 +53,7 @@ router.get('/dues', asyncHandler(async (req, res) => {
   const perDayFine = setting ? setting.perDayFine : 10;
 
   const studentQuery = { status: 'Active' };
+  if (req.user.role === 'FRANCHISE') studentQuery.branch = req.user.branch;
   if (batch) studentQuery.batch = new RegExp(batch.trim(), 'i');
 
   let activeStudents = await Student.find(studentQuery).sort({ name: 1 });
@@ -115,11 +113,11 @@ router.get('/dues', asyncHandler(async (req, res) => {
   res.json(results);
 }));
 
-// Payment History
 router.get('/', asyncHandler(async (req, res) => {
   const { search = '', mode = '', status = '' } = req.query;
 
   const query = {};
+  if (req.user.role === 'FRANCHISE') query.branch = req.user.branch;
   if (mode) query.mode = mode;
   if (status) query.status = status;
 
@@ -153,14 +151,19 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-  const payment = await Payment.create({ ...req.body, collectedBy: req.user._id });
+  const student = await Student.findById(req.body.student);
+  const payment = await Payment.create({ 
+    ...req.body, 
+    branch: student?.branch || 'Main Branch', 
+    collectedBy: req.user._id 
+  });
   const populated = await Payment.findById(payment._id).populate('student').populate('collectedBy', 'name');
   res.status(201).json(populated);
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const payment = await Payment.findById(req.params.id).populate('student').populate('collectedBy', 'name');
-  if (!payment) {
+  if (!payment || (req.user.role === 'FRANCHISE' && payment.branch !== req.user.branch)) {
     res.status(404);
     throw new Error('Payment not found.');
   }
@@ -168,24 +171,25 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
+  const existing = await Payment.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
+    res.status(404); throw new Error('Payment not found.');
+  }
+
   const payment = await Payment.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
     .populate('student')
     .populate('collectedBy', 'name');
-
-  if (!payment) {
-    res.status(404);
-    throw new Error('Payment not found.');
-  }
 
   res.json(payment);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const payment = await Payment.findByIdAndDelete(req.params.id);
-  if (!payment) {
-    res.status(404);
-    throw new Error('Payment not found.');
+  const existing = await Payment.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
+    res.status(404); throw new Error('Payment not found.');
   }
+
+  await Payment.findByIdAndDelete(req.params.id);
   res.json({ message: 'Payment deleted successfully.' });
 }));
 

@@ -9,12 +9,10 @@ const router = express.Router();
 router.use(protect);
 
 const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
-
 const validStudentStatuses = ['Active', 'Inactive', 'Completed'];
 
 const normalizeStudentStatus = (status) => {
   if (!status) return '';
-
   return validStudentStatuses.find(
     (item) => item.toLowerCase() === String(status).trim().toLowerCase()
   ) || '';
@@ -22,7 +20,6 @@ const normalizeStudentStatus = (status) => {
 
 const normalizeEmails = (emails = []) => {
   const list = Array.isArray(emails) ? emails : String(emails || '').split(',');
-
   return [...new Set(
     list
       .map((email) => String(email || '').trim().toLowerCase())
@@ -30,25 +27,24 @@ const normalizeEmails = (emails = []) => {
   )];
 };
 
-const getStudentRecipients = async ({ batch = '', status = '' } = {}) => {
+const getStudentRecipients = async ({ batch = '', status = '', user } = {}) => {
   const query = { email: { $exists: true, $ne: '' } };
+  
+  if (user.role === 'FRANCHISE') query.branch = user.branch;
+
   const cleanBatch = String(batch || '').trim();
   const cleanStatus = normalizeStudentStatus(status);
 
-  if (cleanBatch) {
-    query.batch = buildRegex(cleanBatch);
-  }
-
-  if (cleanStatus) {
-    query.status = cleanStatus;
-  }
+  if (cleanBatch) query.batch = buildRegex(cleanBatch);
+  if (cleanStatus) query.status = cleanStatus;
 
   const students = await Student.find(query).select('email');
   return normalizeEmails(students.map((student) => student.email));
 };
 
 router.get('/', asyncHandler(async (req, res) => {
-  res.json(await MailLog.find().populate('sentBy', 'name').sort({ createdAt: -1 }));
+  const query = req.user.role === 'FRANCHISE' ? { sentBy: req.user._id } : {};
+  res.json(await MailLog.find(query).populate('sentBy', 'name').sort({ createdAt: -1 }));
 }));
 
 router.post('/send', asyncHandler(async (req, res) => {
@@ -79,14 +75,14 @@ router.post('/send', asyncHandler(async (req, res) => {
   let recipients = [];
 
   if (recipientType === 'all-students') {
-    recipients = await getStudentRecipients();
+    recipients = await getStudentRecipients({ user: req.user });
   } else if (recipientType === 'filtered-students') {
     if (!String(batch || '').trim() && !String(status || '').trim()) {
       res.status(400);
       throw new Error('Select at least one filter: batch or student status.');
     }
 
-    recipients = await getStudentRecipients({ batch, status });
+    recipients = await getStudentRecipients({ batch, status, user: req.user });
   } else {
     recipients = normalizeEmails(emails);
   }

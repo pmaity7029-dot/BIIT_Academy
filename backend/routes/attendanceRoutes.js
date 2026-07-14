@@ -11,22 +11,15 @@ const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
 
 const getDayRange = (dateValue) => {
   const date = new Date(dateValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
+  if (Number.isNaN(date.getTime())) return null;
   date.setHours(0, 0, 0, 0);
-
   const end = new Date(date);
   end.setHours(23, 59, 59, 999);
-
   return { start: date, end };
 };
 
-const buildSheet = async ({ dateValue, batch = '' }) => {
+const buildSheet = async ({ dateValue, batch = '', user }) => {
   const range = getDayRange(dateValue);
-
   if (!range) {
     const error = new Error('Invalid attendance date.');
     error.statusCode = 400;
@@ -34,13 +27,10 @@ const buildSheet = async ({ dateValue, batch = '' }) => {
   }
 
   const studentQuery = { status: 'Active' };
-
-  if (batch) {
-    studentQuery.batch = buildRegex(batch);
-  }
+  if (user.role === 'FRANCHISE') studentQuery.branch = user.branch;
+  if (batch) studentQuery.batch = buildRegex(batch);
 
   const students = await Student.find(studentQuery).sort({ name: 1 });
-
   const existing = await Attendance.find({
     date: { $gte: range.start, $lte: range.end }
   });
@@ -58,9 +48,9 @@ router.get(
   asyncHandler(async (req, res) => {
     const sheet = await buildSheet({
       dateValue: req.params.date,
-      batch: req.query.batch || ''
+      batch: req.query.batch || '',
+      user: req.user
     });
-
     res.json(sheet);
   })
 );
@@ -70,9 +60,9 @@ router.get(
   asyncHandler(async (req, res) => {
     const sheet = await buildSheet({
       dateValue: req.query.date,
-      batch: req.query.batch || ''
+      batch: req.query.batch || '',
+      user: req.user
     });
-
     res.json(sheet);
   })
 );
@@ -83,29 +73,24 @@ router.get(
     const { date, student, month, status, search = '', batch = '' } = req.query;
     const query = {};
 
+    if (req.user.role === 'FRANCHISE') query.branch = req.user.branch;
+
     if (student) query.student = student;
     if (status) query.status = status;
 
     if (date) {
       const range = getDayRange(date);
-
       if (!range) {
-        res.status(400);
-        throw new Error('Invalid attendance date.');
+        res.status(400); throw new Error('Invalid attendance date.');
       }
-
       query.date = { $gte: range.start, $lte: range.end };
     } else if (month) {
       const [year, monthIndex] = String(month).split('-').map(Number);
-
       if (!year || !monthIndex) {
-        res.status(400);
-        throw new Error('Invalid attendance month.');
+        res.status(400); throw new Error('Invalid attendance month.');
       }
-
       const start = new Date(year, monthIndex - 1, 1);
       const end = new Date(year, monthIndex, 0, 23, 59, 59, 999);
-
       query.date = { $gte: start, $lte: end };
     }
 
@@ -120,7 +105,6 @@ router.get(
       if (batchText && !String(record.student?.batch || '').toLowerCase().includes(batchText)) {
         return false;
       }
-
       if (!searchText) return true;
 
       const haystack = [
@@ -155,7 +139,6 @@ router.post(
     }
 
     const range = getDayRange(date);
-
     if (!range) {
       res.status(400);
       throw new Error('Invalid attendance date.');
@@ -165,6 +148,8 @@ router.post(
 
     for (const record of records) {
       if (!record.student || !record.status) continue;
+      
+      const studentObj = await Student.findById(record.student);
 
       const updated = await Attendance.findOneAndUpdate(
         { student: record.student, date: range.start },
@@ -172,7 +157,8 @@ router.post(
           status: record.status,
           notes: record.notes || '',
           performanceRating: record.performanceRating || null,
-          markedBy: req.user._id
+          markedBy: req.user._id,
+          branch: studentObj?.branch || 'Main Branch'
         },
         { new: true, upsert: true, setDefaultsOnInsert: true }
       ).populate('student');

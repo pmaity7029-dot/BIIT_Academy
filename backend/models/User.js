@@ -6,7 +6,9 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ['ADMIN'], default: 'ADMIN' },
+    role: { type: String, enum: ['ADMIN', 'FRANCHISE'], default: 'ADMIN' },
+    branch: { type: String, trim: true, default: 'Main Branch' },
+    mustChangePassword: { type: Boolean, default: false },
     resetPasswordToken: String,
     resetPasswordExpires: Date
   },

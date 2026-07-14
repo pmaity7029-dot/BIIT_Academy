@@ -10,7 +10,6 @@ const router = express.Router();
 router.use(protect);
 
 const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
-
 const LEGACY_LOCATION_FIELD = ['cen', 'tre'].join('');
 
 const sanitizeStudentPayload = (payload = {}) => {
@@ -19,16 +18,19 @@ const sanitizeStudentPayload = (payload = {}) => {
 };
 
 router.get('/metrics', asyncHandler(async (req, res) => {
+  const branchFilter = req.user.role === 'FRANCHISE' ? { branch: req.user.branch } : {};
+
   const [totalStudents, activeStudents, presentToday, certificatesIssued, revenueAgg] = await Promise.all([
-    Student.countDocuments(),
-    Student.countDocuments({ status: 'Active' }),
+    Student.countDocuments(branchFilter),
+    Student.countDocuments({ ...branchFilter, status: 'Active' }),
     Attendance.countDocuments({
+      ...branchFilter,
       date: { $gte: startOfToday(), $lt: endOfToday() },
       status: 'Present'
     }),
-    Certificate.countDocuments(),
+    Certificate.countDocuments(branchFilter),
     Payment.aggregate([
-      { $match: { paidDate: { $gte: startOfMonth(), $lte: endOfMonth() } } },
+      { $match: { ...branchFilter, paidDate: { $gte: startOfMonth(), $lte: endOfMonth() } } },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ])
   ]);
@@ -44,7 +46,9 @@ router.get('/metrics', asyncHandler(async (req, res) => {
 }));
 
 router.get('/batches/list', asyncHandler(async (req, res) => {
+  const branchFilter = req.user.role === 'FRANCHISE' ? { branch: req.user.branch } : {};
   const batches = await Student.distinct('batch', {
+    ...branchFilter,
     batch: { $exists: true, $ne: '' }
   });
 
@@ -59,9 +63,10 @@ router.get('/', asyncHandler(async (req, res) => {
   const { search = '', status = '', batch = '' } = req.query;
   const query = {};
 
+  if (req.user.role === 'FRANCHISE') query.branch = req.user.branch;
+
   if (search) {
     const regex = buildRegex(search);
-
     query.$or = [
       { name: regex },
       { fatherName: regex },
@@ -81,14 +86,20 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-  const student = await Student.create(sanitizeStudentPayload(req.body));
+  const payload = sanitizeStudentPayload(req.body);
+  if (req.user.role === 'FRANCHISE') {
+    payload.branch = req.user.branch;
+  } else if (!payload.branch) {
+    payload.branch = 'Main Branch';
+  }
+  const student = await Student.create(payload);
   res.status(201).json(student);
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const student = await Student.findById(req.params.id);
 
-  if (!student) {
+  if (!student || (req.user.role === 'FRANCHISE' && student.branch !== req.user.branch)) {
     res.status(404);
     throw new Error('Student not found.');
   }
@@ -118,54 +129,43 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.put('/:id', asyncHandler(async (req, res) => {
-  const student = await Student.findByIdAndUpdate(req.params.id, sanitizeStudentPayload(req.body), {
+  const existing = await Student.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
+    res.status(404); throw new Error('Student not found.');
+  }
+
+  const payload = sanitizeStudentPayload(req.body);
+  if (req.user.role === 'FRANCHISE') payload.branch = req.user.branch;
+
+  const student = await Student.findByIdAndUpdate(req.params.id, payload, {
     new: true,
     runValidators: true
   });
-
-  if (!student) {
-    res.status(404);
-    throw new Error('Student not found.');
-  }
 
   res.json(student);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const student = await Student.findByIdAndDelete(req.params.id);
-
-  if (!student) {
-    res.status(404);
-    throw new Error('Student not found.');
+  const existing = await Student.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
+    res.status(404); throw new Error('Student not found.');
   }
 
+  await Student.findByIdAndDelete(req.params.id);
   res.json({ message: 'Student deleted successfully.' });
 }));
 
 function startOfMonth() {
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
 }
-
 function endOfMonth() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1, 0);
-  d.setHours(23, 59, 59, 999);
-  return d;
+  const d = new Date(); d.setMonth(d.getMonth() + 1, 0); d.setHours(23, 59, 59, 999); return d;
 }
-
 function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const d = new Date(); d.setHours(0, 0, 0, 0); return d;
 }
-
 function endOfToday() {
-  const d = new Date();
-  d.setHours(23, 59, 59, 999);
-  return d;
+  const d = new Date(); d.setHours(23, 59, 59, 999); return d;
 }
 
 export default router;

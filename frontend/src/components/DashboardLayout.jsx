@@ -1,7 +1,6 @@
 import { Avatar, Button, Drawer, Grid, Layout, Menu, Typography } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import { FiUser } from 'react-icons/fi';
 import {
   FiAward,
   FiBarChart2,
@@ -14,55 +13,14 @@ import {
   FiMenu,
   FiMonitor,
   FiUsers,
-  FiX
+  FiX,
+  FiShield,
+  FiLock,
+  FiUser
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const { Header, Sider, Content } = Layout;
-
-const menuItems = [
-  { key: '/admin/dashboard', icon: <FiHome />, label: 'Dashboard' },
-  {
-    type: 'group',
-    label: 'Students',
-    children: [
-      { key: '/admin/students', icon: <FiUsers />, label: 'All Students' },
-      { key: '/admin/attendance', icon: <FiCalendar />, label: 'Attendance' },
-      { key: '/admin/performance', icon: <FiBarChart2 />, label: 'Performance' },
-      { key: '/admin/id-cards', icon: <FiUser />, label: 'ID Cards' } // NEW MENU ITEM
-    ]
-  },
-  {
-    type: 'group',
-    label: 'Courses',
-    children: [
-      { key: '/admin/courses', icon: <FiBookOpen />, label: 'Batches & Courses' }
-    ]
-  },
-  {
-    type: 'group',
-    label: 'Finance & Certs',
-    children: [
-      { key: '/admin/payments', icon: <FiCreditCard />, label: 'Payments' },
-      { key: '/admin/certificates', icon: <FiAward />, label: 'Certificates' }
-    ]
-  },
-  {
-    type: 'group',
-    label: 'Communication',
-    children: [
-      { key: '/admin/messages', icon: <FiMail />, label: 'Messages' }
-    ]
-  }
-];
-
-const pageTitle = (pathname) => {
-  const match = menuItems
-    .flatMap((item) => item.children || [item])
-    .find((item) => item.key === pathname);
-
-  return match?.label || 'Dashboard';
-};
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -70,6 +28,73 @@ export default function DashboardLayout() {
   const screens = Grid.useBreakpoint();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const getMenuItems = () => {
+    if (user?.mustChangePassword) {
+      return [{ key: '/admin/change-password', icon: <FiLock />, label: 'Change Password' }];
+    }
+
+    const items = [
+      { key: '/admin/dashboard', icon: <FiHome />, label: 'Dashboard' },
+      {
+        type: 'group',
+        label: 'Students',
+        children: [
+          { key: '/admin/students', icon: <FiUsers />, label: 'All Students' },
+          { key: '/admin/attendance', icon: <FiCalendar />, label: 'Attendance' },
+          { key: '/admin/performance', icon: <FiBarChart2 />, label: 'Performance' },
+          { key: '/admin/id-cards', icon: <FiUser />, label: 'ID Cards' }
+        ]
+      },
+      {
+        type: 'group',
+        label: 'Courses',
+        children: [
+          { key: '/admin/courses', icon: <FiBookOpen />, label: 'Batches & Courses' }
+        ]
+      },
+      {
+        type: 'group',
+        label: 'Finance & Certs',
+        children: [
+          { key: '/admin/payments', icon: <FiCreditCard />, label: 'Payments' },
+          { key: '/admin/certificates', icon: <FiAward />, label: 'Certificates' }
+        ]
+      },
+      {
+        type: 'group',
+        label: 'Communication',
+        children: [
+          { key: '/admin/messages', icon: <FiMail />, label: 'Messages' }
+        ]
+      }
+    ];
+
+    if (user?.role === 'ADMIN') {
+      items.push({
+        type: 'group',
+        label: 'Administration',
+        children: [
+          { key: '/admin/franchises', icon: <FiShield />, label: 'Franchises' }
+        ]
+      });
+    }
+
+    items.push({
+      key: '/admin/change-password', icon: <FiLock />, label: 'Change Password'
+    });
+
+    return items;
+  };
+
+  const menuItems = getMenuItems();
+
+  const pageTitle = (pathname) => {
+    const match = menuItems
+      .flatMap((item) => item.children || [item])
+      .find((item) => item.key === pathname);
+    return match?.label || 'Dashboard';
+  };
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -130,9 +155,7 @@ export default function DashboardLayout() {
         onClose={() => setMobileMenuOpen(false)}
         rootClassName="mobile-admin-drawer-root"
         className="mobile-admin-drawer"
-        styles={{
-          body: { padding: 0 }
-        }}
+        styles={{ body: { padding: 0 } }}
       >
         <div className="brand-block mobile-brand-block">
           <div className="mobile-brand-left">
@@ -144,12 +167,7 @@ export default function DashboardLayout() {
             </div>
           </div>
 
-          <Button
-            type="text"
-            className="mobile-drawer-close"
-            icon={<FiX />}
-            onClick={() => setMobileMenuOpen(false)}
-          />
+          <Button type="text" className="mobile-drawer-close" icon={<FiX />} onClick={() => setMobileMenuOpen(false)} />
         </div>
 
         {menuNode}
@@ -157,13 +175,7 @@ export default function DashboardLayout() {
 
       <Layout className="admin-main-layout">
         <Header className="admin-header">
-          <Button
-            type="text"
-            className="mobile-menu-btn"
-            icon={<FiMenu />}
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          />
+          <Button type="text" className="mobile-menu-btn" icon={<FiMenu />} onClick={() => setMobileMenuOpen(true)} />
 
           <div className="header-left">
             <Typography.Title level={4} className="header-title">

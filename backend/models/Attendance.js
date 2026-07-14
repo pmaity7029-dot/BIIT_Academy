@@ -7,7 +7,8 @@ const attendanceSchema = new mongoose.Schema(
     status: { type: String, enum: ['Present', 'Absent', 'Late', 'Leave'], required: true },
     notes: { type: String, trim: true },
     performanceRating: { type: Number, min: 1, max: 5, default: null },
-    markedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    markedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    branch: { type: String, trim: true, default: 'Main Branch' }
   },
   { timestamps: true }
 );

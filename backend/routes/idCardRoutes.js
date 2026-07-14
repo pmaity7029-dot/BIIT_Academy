@@ -1,17 +1,19 @@
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import IdCard from '../models/IdCard.js';
-import { protect } from '../middleware/authMiddleware.js';
+import Student from '../models/Student.js';
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 router.use(protect);
 
-// 1. Get all saved ID Cards with search filters (Name, RegNo, Batch)
 router.get(
   '/',
   asyncHandler(async (req, res) => {
     const { search = '' } = req.query;
     const query = {};
+
+    if (req.user.role === 'FRANCHISE') query.branch = req.user.branch;
 
     if (search) {
       const regex = new RegExp(String(search).trim(), 'i');
@@ -27,31 +29,42 @@ router.get(
   })
 );
 
-// 2. Create/Save a new ID Card
 router.post(
   '/',
+  adminOnly,
   asyncHandler(async (req, res) => {
-    // FAILSAFE: Agar data empty aaye toh clear message dena server crash mat karna
     if (!req.body || Object.keys(req.body).length === 0) {
       res.status(400);
       throw new Error('No data received. Please check your form payload.');
     }
+    
+    const payload = { ...req.body };
+    if (payload.student) {
+      const student = await Student.findById(payload.student);
+      if (student) payload.branch = student.branch;
+    }
 
-    const idCard = await IdCard.create(req.body);
+    const idCard = await IdCard.create(payload);
     res.status(201).json(idCard);
   })
 );
 
-// 3. Update an existing ID Card
 router.put(
   '/:id',
+  adminOnly,
   asyncHandler(async (req, res) => {
     if (!req.body || Object.keys(req.body).length === 0) {
       res.status(400);
       throw new Error('No data received to update.');
     }
 
-    const idCard = await IdCard.findByIdAndUpdate(req.params.id, req.body, {
+    const payload = { ...req.body };
+    if (payload.student) {
+      const student = await Student.findById(payload.student);
+      if (student) payload.branch = student.branch;
+    }
+
+    const idCard = await IdCard.findByIdAndUpdate(req.params.id, payload, {
       new: true,
       runValidators: true
     });
@@ -65,9 +78,9 @@ router.put(
   })
 );
 
-// 4. Delete an ID Card record
 router.delete(
   '/:id',
+  adminOnly,
   asyncHandler(async (req, res) => {
     const idCard = await IdCard.findByIdAndDelete(req.params.id);
 
