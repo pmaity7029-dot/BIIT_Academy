@@ -82,7 +82,7 @@ router.get('/dues', asyncHandler(async (req, res) => {
   let results = activeStudents.map(student => {
     const payment = paidMap[student._id.toString()];
     const isPaid = payment && payment.status === 'Paid';
-    const baseFee = batchFeeMap[student.batch] || 0;
+    const baseFee = student.installmentFeePerMonth || batchFeeMap[student.batch] || 0;
 
     let fineAmount = 0;
     if (payment) {

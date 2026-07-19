@@ -22,6 +22,7 @@ export default function Students() {
   const [form] = Form.useForm();
   const [students, setStudents] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
+  const [courseOptions, setCourseOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const screens = Grid.useBreakpoint();
@@ -43,6 +44,15 @@ export default function Students() {
     }
   };
 
+  const loadCourses = async () => {
+    try {
+      const { data } = await api.get('/courses');
+      setCourseOptions((data || []).filter((course) => course.status !== 'Inactive'));
+    } catch (error) {
+      setCourseOptions([]);
+    }
+  };
+
   const load = async (nextFilters = filters) => {
     try {
       setLoading(true);
@@ -58,12 +68,31 @@ export default function Students() {
   useEffect(() => {
     load();
     loadBatches();
+    loadCourses();
   }, []);
+
+  const openEnrollment = () => {
+    form.resetFields();
+    form.setFieldsValue({
+      status: 'Active',
+      admissionFee: 0,
+      examFee: 0,
+      installmentFeePerMonth: 0,
+      courses: [],
+      photo: ''
+    });
+    setOpen(true);
+  };
 
   const submit = async () => {
     try {
       const values = await form.validateFields();
-      await api.post('/students', { ...values, dob: values.dob?.toISOString(), enrolledDate: values.enrolledDate?.toISOString() });
+      await api.post('/students', {
+        ...values,
+        courses: values.courses || [],
+        dob: values.dob?.toISOString(),
+        enrolledDate: values.enrolledDate?.toISOString()
+      });
       message.success('Student enrolled successfully');
       form.resetFields();
       setOpen(false);
@@ -184,7 +213,7 @@ export default function Students() {
         subtitle="Manage student enrolment, search, status, batch, and records"
         actionText="Enroll Student"
         actionIcon={<FiPlus />}
-        onAction={() => setOpen(true)}
+        onAction={openEnrollment}
       />
 
       <Card className="content-card students-card" variant="borderless">
@@ -206,7 +235,7 @@ export default function Students() {
       </Card>
 
       <Drawer title="Enroll New Student" width={780} open={open} onClose={() => setOpen(false)} extra={<Space><Button onClick={() => setOpen(false)}>Cancel</Button><Button type="primary" onClick={submit}>Save Student</Button></Space>}>
-        <StudentForm form={form} batchOptions={batchOptions} />
+        <StudentForm form={form} batchOptions={batchOptions} courseOptions={courseOptions} />
       </Drawer>
     </div>
   );

@@ -1,6 +1,10 @@
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
+import Student from '../models/Student.js';
+import Payment from '../models/Payment.js';
+import Attendance from '../models/Attendance.js';
+import Certificate from '../models/Certificate.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 import { sendMail } from '../utils/email.js';
 
@@ -10,6 +14,60 @@ router.use(protect, adminOnly);
 router.get('/', asyncHandler(async (req, res) => {
   const franchises = await User.find({ role: 'FRANCHISE' }).select('-password').sort({ createdAt: -1 });
   res.json(franchises);
+}));
+
+router.get('/:id/profile', asyncHandler(async (req, res) => {
+  const franchise = await User.findById(req.params.id).select('-password');
+
+  if (!franchise || franchise.role !== 'FRANCHISE') {
+    res.status(404);
+    throw new Error('Franchise not found');
+  }
+
+  const branchFilter = { branch: franchise.branch };
+
+  const [
+    totalStudents,
+    activeStudents,
+    presentToday,
+    certificatesIssued,
+    revenueAgg,
+    recentStudents,
+    recentPayments
+  ] = await Promise.all([
+    Student.countDocuments(branchFilter),
+    Student.countDocuments({ ...branchFilter, status: 'Active' }),
+    Attendance.countDocuments({
+      ...branchFilter,
+      date: { $gte: startOfToday(), $lt: endOfToday() },
+      status: 'Present'
+    }),
+    Certificate.countDocuments(branchFilter),
+    Payment.aggregate([
+      { $match: { ...branchFilter, status: { $in: ['Paid', 'Partial'] } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $add: ['$amount', { $ifNull: ['$fine', 0] }] } }
+        }
+      }
+    ]),
+    Student.find(branchFilter).sort({ createdAt: -1 }).limit(8),
+    Payment.find(branchFilter).populate('student').sort({ paidDate: -1 }).limit(8)
+  ]);
+
+  res.json({
+    franchise,
+    metrics: {
+      totalStudents,
+      activeStudents,
+      presentToday,
+      certificatesIssued,
+      totalRevenue: revenueAgg[0]?.total || 0
+    },
+    recentStudents,
+    recentPayments
+  });
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
@@ -55,5 +113,17 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   await User.findByIdAndDelete(req.params.id);
   res.json({ message: 'Franchise removed successfully' });
 }));
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function endOfToday() {
+  const d = new Date();
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
 
 export default router;

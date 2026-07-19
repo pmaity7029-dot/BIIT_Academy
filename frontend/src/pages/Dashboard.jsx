@@ -6,10 +6,12 @@ import api from '../api/client.js';
 import MetricCard from '../components/MetricCard.jsx';
 import PageHeader from '../components/PageHeader.jsx';
 import { ShimmerMetricGrid, ShimmerTable } from '../components/ShimmerLoading.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import dayjs from 'dayjs';
 import React from "react";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState({});
   const [students, setStudents] = useState([]);
@@ -93,13 +95,16 @@ export default function Dashboard() {
       />
 
       {loading ? (
-        <ShimmerMetricGrid cards={5} />
+        <ShimmerMetricGrid cards={user?.role === 'ADMIN' ? 6 : 5} />
       ) : (
         <div className="metric-grid dashboard-metric-grid">
           <MetricCard title="Total Students" value={metrics.totalStudents || 0} icon={<FiUsers />} />
           <MetricCard title="Active Students" value={metrics.activeStudents || 0} icon={<FiCheckCircle />} />
           <MetricCard title="Present Today" value={metrics.presentToday || 0} icon={<FiCalendar />} />
-          <MetricCard title="Revenue" value={metrics.monthlyRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
+          <MetricCard title={user?.role === 'ADMIN' ? 'All Branch Revenue' : 'Branch Revenue'} value={metrics.allTimeRevenue || metrics.monthlyRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
+          {user?.role === 'ADMIN' && (
+            <MetricCard title="Main Branch Revenue" value={metrics.mainBranchRevenue || 0} suffix="INR" icon={<FiCreditCard />} />
+          )}
           <MetricCard title="Certs Issued" value={metrics.certificatesIssued || 0} icon={<FiAward />} />
         </div>
       )}

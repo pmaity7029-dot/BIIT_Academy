@@ -1,4 +1,4 @@
-import { Button, Card, DatePicker, Grid, Input, Select, Space, Table, Tag, message, Rate } from 'antd';
+import { Button, Card, DatePicker, Grid, Input, InputNumber, Select, Space, Table, Tag, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiRefreshCcw, FiSave, FiSearch, FiCheckCircle, FiXCircle } from 'react-icons/fi';
@@ -96,7 +96,7 @@ export default function Attendance() {
           student: row.student,
           status: row.attendance?.status || 'Present',
           notes: row.attendance?.notes || '',
-          performanceRating: row.attendance?.performanceRating || 0
+          performanceRating: row.attendance?.performanceRating ?? 0
         }))
       );
     } catch (error) {
@@ -192,7 +192,7 @@ export default function Attendance() {
           student: row.student._id,
           status: row.status,
           notes: row.notes,
-          performanceRating: row.performanceRating || null
+          performanceRating: row.performanceRating ?? 0
         }))
       });
 
@@ -234,13 +234,16 @@ export default function Attendance() {
       )
     },
     {
-      title: 'Performance',
-      width: 170,
+      title: 'Score (0-5)',
+      width: 135,
       render: (_, row) => (
-        <Rate
+        <InputNumber
+          min={0}
+          max={5}
+          precision={0}
           value={row.performanceRating}
-          onChange={(value) => updateRow(row.key, { performanceRating: value })}
-          style={{ color: '#faad14', fontSize: '16px' }}
+          onChange={(value) => updateRow(row.key, { performanceRating: value ?? 0 })}
+          className="attendance-score-input"
         />
       )
     },
@@ -274,7 +277,7 @@ export default function Attendance() {
       )
     },
     {
-      title: 'Status & Perf.',
+      title: 'Status & Score',
       render: (_, row) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <Select
@@ -283,10 +286,13 @@ export default function Attendance() {
             onChange={(value) => updateRow(row.key, { status: value })}
             options={attendanceStatusOptions}
           />
-          <Rate
+          <InputNumber
+            min={0}
+            max={5}
+            precision={0}
             value={row.performanceRating}
-            onChange={(value) => updateRow(row.key, { performanceRating: value })}
-            style={{ color: '#faad14', fontSize: '14px' }}
+            onChange={(value) => updateRow(row.key, { performanceRating: value ?? 0 })}
+            className="attendance-score-input"
           />
         </div>
       )
@@ -319,9 +325,9 @@ export default function Attendance() {
       render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag>
     },
     {
-      title: 'Performance',
+      title: 'Score',
       dataIndex: 'performanceRating',
-      render: (rating) => rating ? <Rate disabled defaultValue={rating} style={{ fontSize: '14px' }} /> : '-'
+      render: (score) => <Tag color="blue">{Number(score || 0)}/5</Tag>
     },
     { title: 'Notes', dataIndex: 'notes' }
   ];
@@ -348,7 +354,7 @@ export default function Attendance() {
       render: (_, row) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <Tag color={attendanceColor(row.status)} style={{ width: 'fit-content' }}>{row.status}</Tag>
-          {row.performanceRating ? <Rate disabled defaultValue={row.performanceRating} style={{ fontSize: '12px' }} /> : null}
+          <Tag color="blue" style={{ width: 'fit-content' }}>{Number(row.performanceRating || 0)}/5</Tag>
         </div>
       )
     }
@@ -364,7 +370,7 @@ export default function Attendance() {
       <PageHeader
         icon={<FiCalendar />}
         title="Attendance"
-        subtitle="Mark daily attendance, filter by batch, and rate daily performance."
+        subtitle="Mark daily attendance, filter by batch, and enter daily score."
       />
 
       <Card className="content-card" bordered={false}>

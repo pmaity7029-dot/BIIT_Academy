@@ -9,6 +9,12 @@ router.use(protect);
 
 const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
 
+const normalizeScore = (value) => {
+  const score = Number(value);
+  if (!Number.isFinite(score)) return 0;
+  return Math.min(5, Math.max(0, score));
+};
+
 const getDayRange = (dateValue) => {
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return null;
@@ -156,7 +162,7 @@ router.post(
         {
           status: record.status,
           notes: record.notes || '',
-          performanceRating: record.performanceRating || null,
+          performanceRating: normalizeScore(record.performanceRating),
           markedBy: req.user._id,
           branch: studentObj?.branch || 'Main Branch'
         },

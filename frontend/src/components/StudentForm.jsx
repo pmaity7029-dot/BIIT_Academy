@@ -1,10 +1,36 @@
-import { DatePicker, Form, Input, Select } from 'antd';
+import { Button, DatePicker, Form, Input, InputNumber, Select, Upload, message } from 'antd';
 import React from "react";
+import { FiCamera, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
-export default function StudentForm({ form, batchOptions = [] }) {
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+export default function StudentForm({ form, batchOptions = [], courseOptions = [] }) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const photo = Form.useWatch('photo', form);
+
+  const handlePhotoSelect = async (file) => {
+    if (!file.type?.startsWith('image/')) {
+      message.error('Please upload an image file');
+      return Upload.LIST_IGNORE;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      message.error('Photo size should be under 2 MB');
+      return Upload.LIST_IGNORE;
+    }
+
+    const dataUrl = await readFileAsDataUrl(file);
+    form.setFieldsValue({ photo: dataUrl });
+    return Upload.LIST_IGNORE;
+  };
 
   return (
     <Form form={form} layout="vertical" className="form-grid">
@@ -46,6 +72,54 @@ export default function StudentForm({ form, batchOptions = [] }) {
             label: batch
           }))}
         />
+      </Form.Item>
+
+      <Form.Item name="courses" label="Choose Courses" className="grid-span-2">
+        <Select
+          allowClear
+          mode="multiple"
+          showSearch
+          optionFilterProp="label"
+          placeholder="Select one or more courses"
+          options={courseOptions.map((course) => ({
+            value: course._id,
+            label: `${course.title}${course.duration ? ` - ${course.duration}` : ''}`
+          }))}
+        />
+      </Form.Item>
+
+      <Form.Item name="admissionFee" label="Admission Fees" initialValue={0}>
+        <InputNumber min={0} className="full-width" placeholder="Enter admission fees" />
+      </Form.Item>
+
+      <Form.Item name="examFee" label="Exam Fees" initialValue={0}>
+        <InputNumber min={0} className="full-width" placeholder="Enter exam fees" />
+      </Form.Item>
+
+      <Form.Item name="installmentFeePerMonth" label="Installment Fees / Month" initialValue={0}>
+        <InputNumber min={0} className="full-width" placeholder="Enter monthly installment fees" />
+      </Form.Item>
+
+      <Form.Item name="photo" hidden>
+        <Input />
+      </Form.Item>
+
+      <Form.Item label="Profile Photo" className="grid-span-2">
+        <div className="student-photo-upload">
+          <div className="student-photo-preview">
+            {photo ? <img src={photo} alt="Student profile preview" /> : <span>Photo</span>}
+          </div>
+          <div className="student-photo-actions">
+            <Upload accept="image/*" showUploadList={false} beforeUpload={handlePhotoSelect}>
+              <Button icon={<FiCamera />}>Upload Photo</Button>
+            </Upload>
+            {photo && (
+              <Button icon={<FiTrash2 />} danger onClick={() => form.setFieldsValue({ photo: '' })}>
+                Remove
+              </Button>
+            )}
+          </div>
+        </div>
       </Form.Item>
       
       {isAdmin && (

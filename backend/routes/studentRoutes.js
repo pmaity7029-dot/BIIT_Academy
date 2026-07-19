@@ -11,16 +11,40 @@ router.use(protect);
 
 const buildRegex = (value) => new RegExp(String(value || '').trim(), 'i');
 const LEGACY_LOCATION_FIELD = ['cen', 'tre'].join('');
+const revenueStatuses = ['Paid', 'Partial'];
 
 const sanitizeStudentPayload = (payload = {}) => {
   const { [LEGACY_LOCATION_FIELD]: _removedLocation, ...rest } = payload;
   return rest;
 };
 
+const revenuePipeline = (match = {}) => [
+  { $match: { ...match, status: { $in: revenueStatuses } } },
+  {
+    $group: {
+      _id: null,
+      total: { $sum: { $add: ['$amount', { $ifNull: ['$fine', 0] }] } }
+    }
+  }
+];
+
+const aggregateRevenue = async (match = {}) => {
+  const result = await Payment.aggregate(revenuePipeline(match));
+  return result[0]?.total || 0;
+};
+
 router.get('/metrics', asyncHandler(async (req, res) => {
   const branchFilter = req.user.role === 'FRANCHISE' ? { branch: req.user.branch } : {};
+  const isAdmin = req.user.role === 'ADMIN';
 
-  const [totalStudents, activeStudents, presentToday, certificatesIssued, revenueAgg] = await Promise.all([
+  const [
+    totalStudents,
+    activeStudents,
+    presentToday,
+    certificatesIssued,
+    allTimeRevenue,
+    mainBranchRevenue
+  ] = await Promise.all([
     Student.countDocuments(branchFilter),
     Student.countDocuments({ ...branchFilter, status: 'Active' }),
     Attendance.countDocuments({
@@ -29,10 +53,8 @@ router.get('/metrics', asyncHandler(async (req, res) => {
       status: 'Present'
     }),
     Certificate.countDocuments(branchFilter),
-    Payment.aggregate([
-      { $match: { ...branchFilter, paidDate: { $gte: startOfMonth(), $lte: endOfMonth() } } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ])
+    aggregateRevenue(branchFilter),
+    isAdmin ? aggregateRevenue({ branch: 'Main Branch' }) : Promise.resolve(0)
   ]);
 
   res.json({
@@ -40,7 +62,10 @@ router.get('/metrics', asyncHandler(async (req, res) => {
     activeStudents,
     presentToday,
     certificatesIssued,
-    monthlyRevenue: revenueAgg[0]?.total || 0,
+    allTimeRevenue,
+    monthlyRevenue: allTimeRevenue,
+    mainBranchRevenue: isAdmin ? mainBranchRevenue : undefined,
+    branchRevenue: req.user.role === 'FRANCHISE' ? allTimeRevenue : mainBranchRevenue,
     unreadMessages: 0
   });
 }));
@@ -81,7 +106,9 @@ router.get('/', asyncHandler(async (req, res) => {
   if (status) query.status = status;
   if (batch) query.batch = buildRegex(batch);
 
-  const students = await Student.find(query).sort({ createdAt: -1 });
+  const students = await Student.find(query)
+    .populate('courses', 'title fee duration category')
+    .sort({ createdAt: -1 });
   res.json(students);
 }));
 
@@ -97,7 +124,7 @@ router.post('/', asyncHandler(async (req, res) => {
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
-  const student = await Student.findById(req.params.id);
+  const student = await Student.findById(req.params.id).populate('courses', 'title fee duration category');
 
   if (!student || (req.user.role === 'FRANCHISE' && student.branch !== req.user.branch)) {
     res.status(404);
@@ -155,12 +182,6 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   res.json({ message: 'Student deleted successfully.' });
 }));
 
-function startOfMonth() {
-  const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
-}
-function endOfMonth() {
-  const d = new Date(); d.setMonth(d.getMonth() + 1, 0); d.setHours(23, 59, 59, 999); return d;
-}
 function startOfToday() {
   const d = new Date(); d.setHours(0, 0, 0, 0); return d;
 }

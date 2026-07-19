@@ -15,6 +15,13 @@ const attendanceColor = (status) => {
   return 'blue';
 };
 
+const formatMoney = (value) => `INR ${Number(value || 0).toLocaleString('en-IN')}`;
+
+const getCourseLabels = (courses = []) =>
+  courses
+    .map((course) => course?.title || course)
+    .filter(Boolean);
+
 export default function StudentDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,10 +45,11 @@ export default function StudentDetails() {
   if (!data) return <ShimmerDetailPage />;
 
   const { student, attendanceStats, attendance = [], payments } = data;
+  const courseLabels = getCourseLabels(student.courses);
 
   const paymentColumns = [
     { title: 'Receipt No.', dataIndex: 'receiptNo' },
-    { title: 'Amount', dataIndex: 'amount', render: (value) => `INR ${Number(value || 0).toLocaleString('en-IN')}` },
+    { title: 'Amount', dataIndex: 'amount', render: formatMoney },
     { title: 'Mode', dataIndex: 'mode' },
     { title: 'Status', dataIndex: 'status', render: (status = 'Paid') => <Tag color={status === 'Paid' ? 'green' : 'gold'}>{status}</Tag> },
     { title: 'Month', dataIndex: 'month' },
@@ -52,7 +60,8 @@ export default function StudentDetails() {
     { title: 'Date', dataIndex: 'date', render: (date) => dayjs(date).format('DD MMM YYYY') },
     { title: 'Day', dataIndex: 'date', render: (date) => dayjs(date).format('dddd') },
     { title: 'Status', dataIndex: 'status', render: (status) => <Tag color={attendanceColor(status)}>{status}</Tag> },
-    { title: 'Notes', dataIndex: 'notes', render: (notes) => notes || '—' }
+    { title: 'Score', dataIndex: 'performanceRating', render: (score) => <Tag color="blue">{Number(score || 0)}/5</Tag> },
+    { title: 'Notes', dataIndex: 'notes', render: (notes) => notes || '-' }
   ];
 
   return (
@@ -61,7 +70,9 @@ export default function StudentDetails() {
 
       <Card className="content-card profile-card" bordered={false}>
         <div className="profile-top">
-          <div className="profile-avatar">{student.name?.slice(0, 2)?.toUpperCase()}</div>
+          <div className="profile-avatar">
+            {student.photo ? <img src={student.photo} alt={`${student.name} profile`} /> : student.name?.slice(0, 2)?.toUpperCase()}
+          </div>
           <div>
             <h2>{student.name}</h2>
             <p>{student.regNo} - {student.batch}</p>
@@ -76,14 +87,20 @@ export default function StudentDetails() {
           <Descriptions.Item label="Emergency Contact">{student.emergencyContact}</Descriptions.Item>
           <Descriptions.Item label="Email">{student.email || 'Not added'}</Descriptions.Item>
           <Descriptions.Item label="Enrolled">{dayjs(student.enrolledDate).format('DD MMM YYYY')}</Descriptions.Item>
+          <Descriptions.Item label="Courses" span={2}>{courseLabels.length ? courseLabels.join(', ') : 'Not added'}</Descriptions.Item>
+          <Descriptions.Item label="Admission Fees">{formatMoney(student.admissionFee)}</Descriptions.Item>
+          <Descriptions.Item label="Exam Fees">{formatMoney(student.examFee)}</Descriptions.Item>
+          <Descriptions.Item label="Installment / Month">{formatMoney(student.installmentFeePerMonth)}</Descriptions.Item>
+          <Descriptions.Item label="Branch">{student.branch || 'Main Branch'}</Descriptions.Item>
           <Descriptions.Item label="Address" span={2}>{student.address || 'Not added'}</Descriptions.Item>
         </Descriptions>
 
         <Row gutter={[16, 16]} className="stats-strip">
-          <Col xs={12} md={6}><Statistic title="Present" value={attendanceStats.present} /></Col>
-          <Col xs={12} md={6}><Statistic title="Absent" value={attendanceStats.absent} /></Col>
-          <Col xs={12} md={6}><Statistic title="Late" value={attendanceStats.late} /></Col>
-          <Col xs={12} md={6}><Statistic title="Rate" value={attendanceStats.rate} suffix="%" /></Col>
+          <Col xs={12} md={4}><Statistic title="Total Attendance" value={attendanceStats.total} /></Col>
+          <Col xs={12} md={4}><Statistic title="Present" value={attendanceStats.present} /></Col>
+          <Col xs={12} md={4}><Statistic title="Absent" value={attendanceStats.absent} /></Col>
+          <Col xs={12} md={4}><Statistic title="Late" value={attendanceStats.late} /></Col>
+          <Col xs={12} md={4}><Statistic title={`Attendance % (${attendanceStats.present}/${attendanceStats.total})`} value={attendanceStats.rate} suffix="%" /></Col>
         </Row>
 
         <div className="button-row">
@@ -94,7 +111,7 @@ export default function StudentDetails() {
       </Card>
 
       <Card className="content-card" bordered={false} title="Attendance History">
-        <Table rowKey="_id" columns={attendanceColumns} dataSource={attendance} pagination={{ pageSize: 10 }} scroll={{ x: 700 }} />
+        <Table rowKey="_id" columns={attendanceColumns} dataSource={attendance} pagination={{ pageSize: 10 }} scroll={{ x: 820 }} />
       </Card>
 
       <Card className="content-card" bordered={false} title="Payment History">

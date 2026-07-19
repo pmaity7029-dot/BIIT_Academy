@@ -1938,3 +1938,57 @@ a { color: inherit; text-decoration: none; }
   font-weight: 600;
   color: #4a5568;
 }
+
+.student-photo-upload {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.student-photo-preview {
+  width: 92px;
+  height: 108px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed #b8c2cc;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.student-photo-preview img,
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.student-photo-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profile-avatar {
+  overflow: hidden;
+}
+
+.attendance-score-input {
+  width: 96px;
+}
+
+.franchise-profile {
+  display: grid;
+  gap: 18px;
+}
+
+.franchise-profile-metrics {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fbff;
+}

@@ -77,6 +77,7 @@ const makeDummyCertificate = () =>
     fatherName: 'Manik Hazra',
     gender: 'Male',
     regNo: 'BIIT0120265902',
+    photo: '',
     birthDateText: '03 April 2004',
     courseTitle: 'Frontend Web Development',
     duration: '6 Months / 120 hrs',
@@ -107,6 +108,7 @@ const getCertificateData = (certificate) => {
     fatherName: certificate.fatherName || student?.fatherName || 'Father Name',
     gender: certificate.gender || student?.gender || 'Male',
     regNo: certificate.regNo || student?.regNo || 'BIIT0120265902',
+    photo: certificate.photo || student?.photo || '',
     birthDateText: certificate.birthDateText || (student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : '03 April 2004'),
     courseTitle: certificate.courseTitle || 'Frontend Web Development',
     duration: certificate.duration || certificate.remarks || '6 Months / 120 hrs',
@@ -139,8 +141,10 @@ const CERTIFICATE_STYLES = `
   .classic-ribbon { position: relative; width: 600px; height: 58px; margin: 9px auto 5px; display: grid; place-items: center; border: 3px solid #b98d2e; border-radius: 16px; background: linear-gradient(90deg, #71110d 0%, #ad251d 20%, #6b0c08 50%, #d74832 82%, #70100e 100%); color: #ffffff; font-size: 37px; font-style: italic; font-weight: 900; line-height: 1; text-shadow: 2px 3px 3px rgba(0,0,0,0.64); box-shadow: 0 5px 10px rgba(0,0,0,0.36); }
   .classic-reg-row { display: flex; justify-content: center; gap: 118px; color: #1b2b70; font-size: 16px; font-weight: 800; }
   .classic-body { position: relative; z-index: 22; margin-top: 50px; padding-left: 86px; padding-right: 28px; }
-  .classic-main-text { margin: 0 0 13px; color: #000; font-size: 18px; line-height: 1.36; font-weight: 800; text-align: left; text-shadow: 0 1px 0 rgba(255,255,255,0.55); }
+  .classic-main-text { margin: 0 0 13px; padding-right: 126px; color: #000; font-size: 18px; line-height: 1.36; font-weight: 800; text-align: left; text-shadow: 0 1px 0 rgba(255,255,255,0.55); }
   .classic-highlight { display: inline; padding: 0 4px; background: #fff200; color: #000; font-weight: 900; }
+  .classic-student-photo { position: absolute; right: 46px; top: 242px; z-index: 28; width: 96px; height: 116px; padding: 4px; border: 2px solid #7d5a1d; background: rgba(255,255,255,0.92); box-shadow: 0 8px 18px rgba(75, 48, 12, 0.22); }
+  .classic-student-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .classic-content-row { display: grid; grid-template-columns: 390px 1fr; gap: 100px; align-items: end; margin-top: 8px; }
   .classic-accreditation-panel { width: 282px; margin-left: 0; }
   .classic-accreditation-title, .classic-accreditation-label, .classic-initiative-label, .classic-partner-label { color: #c91d1d; font-size: 12px; font-weight: 900; line-height: 1; }
@@ -352,6 +356,12 @@ const ClassicCertificate = React.forwardRef(function ClassicCertificate(
             </div>
           </div>
         </div>
+
+        {data.photo && (
+          <div className="classic-student-photo">
+            <img src={data.photo} alt={`${data.studentName} profile`} crossOrigin="anonymous" />
+          </div>
+        )}
       </div>
 
       <div className="classic-footer-strip">
@@ -461,6 +471,7 @@ export default function Certificates() {
       fatherName: student?.fatherName || prev.fatherName,
       gender: student?.gender || prev.gender,
       regNo: student?.regNo || prev.regNo,
+      photo: student?.photo || '',
       birthDateText: student?.dob ? dayjs(student.dob).format('DD MMMM YYYY') : prev.birthDateText
     }));
   };
