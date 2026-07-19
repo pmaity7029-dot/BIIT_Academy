@@ -1,6 +1,6 @@
-import { Button, Card, DatePicker, Input, Modal, Popconfirm, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, DatePicker, Input, Modal, Popconfirm, Select, Space, Table, Tag, message, Upload } from 'antd';
 import { useEffect, useRef, useState } from 'react';
-import { FiAward, FiEdit3, FiPlus, FiPrinter, FiSearch, FiTrash2 } from 'react-icons/fi';
+import { FiAward, FiEdit3, FiPlus, FiPrinter, FiSearch, FiTrash2, FiCamera } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
 import PageHeader from '../components/PageHeader.jsx';
@@ -143,8 +143,11 @@ const CERTIFICATE_STYLES = `
   .classic-body { position: relative; z-index: 22; margin-top: 50px; padding-left: 86px; padding-right: 28px; }
   .classic-main-text { margin: 0 0 13px; padding-right: 126px; color: #000; font-size: 18px; line-height: 1.36; font-weight: 800; text-align: left; text-shadow: 0 1px 0 rgba(255,255,255,0.55); }
   .classic-highlight { display: inline; padding: 0 4px; background: #fff200; color: #000; font-weight: 900; }
-  .classic-student-photo { position: absolute; right: 46px; top: 242px; z-index: 28; width: 96px; height: 116px; padding: 4px; border: 2px solid #7d5a1d; background: rgba(255,255,255,0.92); box-shadow: 0 8px 18px rgba(75, 48, 12, 0.22); }
+  
+  /* Increased perfectly fitted profile size */
+  .classic-student-photo { position: absolute; right: 42px; top: 232px; z-index: 28; width: 116px; height: 145px; padding: 5px; border: 2px solid #7d5a1d; background: rgba(255,255,255,0.92); box-shadow: 0 8px 18px rgba(75, 48, 12, 0.22); }
   .classic-student-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  
   .classic-content-row { display: grid; grid-template-columns: 390px 1fr; gap: 100px; align-items: end; margin-top: 8px; }
   .classic-accreditation-panel { width: 282px; margin-left: 0; }
   .classic-accreditation-title, .classic-accreditation-label, .classic-initiative-label, .classic-partner-label { color: #c91d1d; font-size: 12px; font-weight: 900; line-height: 1; }
@@ -682,7 +685,43 @@ export default function Certificates() {
         <div className="certificate-editor-grid">
           <div className="certificate-editor-form">
             <label className="editor-field-label">Select Existing Student Optional</label>
-            <Select allowClear showSearch optionFilterProp="label" placeholder="Optional: select student" value={editor.student || undefined} onChange={(value) => selectStudentForEditor(value || "")} options={students.map((student) => ({ value: student._id, label: `${student.name} - ${student.regNo}` }))} style={{ width: "100%" }} />
+            <Select allowClear showSearch optionFilterProp="label" placeholder="Optional: select student" value={editor.student || undefined} onChange={(value) => selectStudentForEditor(value || "")} options={students.map((student) => ({ value: student._id, label: `${student.name} - ${student.regNo}` }))} style={{ width: "100%", marginBottom: '14px' }} />
+            
+            <label className="editor-field-label">Student Photo</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
+              {editor.photo && (
+                <div style={{ width: '48px', height: '60px', padding: '2px', border: '1px solid #d9d9d9', borderRadius: '4px', background: '#fff' }}>
+                  <img src={editor.photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )}
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                beforeUpload={async (file) => {
+                  const reader = new FileReader();
+                  reader.onload = () => updateEditor('photo', reader.result);
+                  reader.readAsDataURL(file);
+                  return false; 
+                }}
+              >
+                <Button icon={<FiCamera />}>Upload Photo</Button>
+              </Upload>
+              <Button onClick={() => {
+                const student = students.find((s) => s._id === editor.student);
+                if (student?.photo) {
+                  updateEditor('photo', student.photo);
+                  message.success('Restored student profile photo');
+                } else {
+                  message.warning('No profile photo available for this student');
+                }
+              }}>
+                Use Profile Pic
+              </Button>
+              {editor.photo && (
+                <Button danger icon={<FiTrash2 />} onClick={() => updateEditor('photo', '')} />
+              )}
+            </div>
+
             <label className="editor-field-label">Student Name</label>
             <Input value={editor.studentName} onChange={(event) => updateEditor("studentName", event.target.value)} />
             <label className="editor-field-label">Father Name</label>

@@ -137,7 +137,8 @@ router.get('/', asyncHandler(async (req, res) => {
           payment.month,
           payment.mode,
           payment.status,
-          payment.description
+          payment.description,
+          payment.collectedByName
         ]
           .filter(Boolean)
           .join(' ')
@@ -152,11 +153,25 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.post('/', asyncHandler(async (req, res) => {
   const student = await Student.findById(req.body.student);
+  
+  if (!student) {
+    res.status(404);
+    throw new Error('Student not found.');
+  }
+
+  // Ensure payment can only be collected by the branch the student belongs to
+  if (student.branch !== req.user.branch) {
+    res.status(403);
+    throw new Error(`Payment can only be collected by ${student.branch}.`);
+  }
+
   const payment = await Payment.create({ 
     ...req.body, 
-    branch: student?.branch || 'Main Branch', 
-    collectedBy: req.user._id 
+    branch: student.branch, 
+    collectedBy: req.user._id,
+    collectedByName: req.body.collectedByName || req.user.name
   });
+  
   const populated = await Payment.findById(payment._id).populate('student').populate('collectedBy', 'name');
   res.status(201).json(populated);
 }));

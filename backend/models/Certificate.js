@@ -19,6 +19,7 @@ const certificateSchema = new mongoose.Schema(
     gender: { type: String, trim: true, default: 'Female' },
     regNo: { type: String, trim: true, default: '' },
     birthDateText: { type: String, trim: true, default: '' },
+    photo: { type: String, default: '' }, // Added photo field
     courseTitle: { type: String, required: true, trim: true },
     duration: { type: String, trim: true, default: '6 Months / 120 hrs' },
     grade: { type: String, trim: true, default: 'A+' },

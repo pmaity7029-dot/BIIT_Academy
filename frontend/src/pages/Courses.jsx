@@ -1,6 +1,7 @@
-import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tabs, message } from "antd";
+import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Table, Tabs, Tag, message } from "antd";
 import { useEffect, useState } from "react";
-import { FiBookOpen, FiEdit2, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { FiBookOpen, FiEdit2, FiPlus, FiSearch, FiTrash2, FiUsers } from "react-icons/fi";
 import dayjs from "dayjs";
 import api from "../api/client.js";
 import PageHeader from "../components/PageHeader.jsx";
@@ -16,6 +17,7 @@ const getBatchCourseName = (batch) => batch?.course?.title || batch?.courseName 
 export default function Courses() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
+  const navigate = useNavigate();
 
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
@@ -52,7 +54,19 @@ export default function Courses() {
   const closeCourseModal = () => { setCourseOpen(false); setEditingCourse(null); courseForm.resetFields(); };
 
   const openNewBatch = () => { setEditingBatch(null); batchForm.resetFields(); batchForm.setFieldsValue({ status: "Active" }); setBatchOpen(true); };
-  const openEditBatch = (batch) => { setEditingBatch(batch); batchForm.setFieldsValue({ name: batch.name, course: batch.course?._id || batch.course || undefined, schedule: batch.schedule, startDate: toDayjs(batch.startDate), endDate: toDayjs(batch.endDate), status: batch.status || "Active" }); setBatchOpen(true); };
+  const openEditBatch = (batch) => { 
+    setEditingBatch(batch); 
+    batchForm.setFieldsValue({ 
+      name: batch.name, 
+      course: batch.course?._id || batch.course || undefined, 
+      schedule: batch.schedule, 
+      startDate: toDayjs(batch.startDate), 
+      endDate: toDayjs(batch.endDate), 
+      status: batch.status || "Active",
+      branch: batch.branch || "Main Branch" 
+    }); 
+    setBatchOpen(true); 
+  };
   const closeBatchModal = () => { setBatchOpen(false); setEditingBatch(null); batchForm.resetFields(); };
 
   const saveCourse = async () => {
@@ -126,25 +140,47 @@ export default function Courses() {
 
   const batchColumns = [
     { title: "Batch", dataIndex: "name", width: 170, render: (text) => <div className="batch-table-text" title={text}>{text || "Not set"}</div> },
-    { title: "Course", width: 220, render: (_, row) => { const courseName = getBatchCourseName(row); return <div className="batch-table-text batch-course-name" title={courseName}>{courseName}</div>; } },
-    { title: "Schedule", dataIndex: "schedule", width: 210, render: (text) => <div className="batch-table-text schedule-text" title={text}>{text || "Not set"}</div> },
-    { title: "Start", dataIndex: "startDate", width: 125, render: (date) => <span className="batch-nowrap">{date ? dayjs(date).format("DD MMM YYYY") : "Not set"}</span> },
-    { title: "Status", dataIndex: "status", width: 155, render: (status, row) => isAdmin ? (<Select value={status} size="small" className="attendance-status-select" style={{ width: 125 }} onChange={(value) => updateBatchStatus(row, value)} options={batchStatusOptions} />) : (<span>{status}</span>) }
+    { title: "Course", width: 200, render: (_, row) => { const courseName = getBatchCourseName(row); return <div className="batch-table-text batch-course-name" title={courseName}>{courseName}</div>; } },
+    { title: "Schedule", dataIndex: "schedule", width: 180, render: (text) => <div className="batch-table-text schedule-text" title={text}>{text || "Not set"}</div> },
+    { title: "Start", dataIndex: "startDate", width: 110, render: (date) => <span className="batch-nowrap">{date ? dayjs(date).format("DD MMM YYYY") : "Not set"}</span> },
+    { 
+      title: "Students", 
+      width: 120, 
+      render: (_, row) => (
+        <Button 
+          type="link" 
+          icon={<FiUsers />}
+          onClick={() => navigate(`/admin/students?batch=${encodeURIComponent(row.name)}`)}
+          style={{ padding: 0 }}
+        >
+          {row.studentCount || 0}
+        </Button>
+      )
+    },
+    { title: "Status", dataIndex: "status", width: 145, render: (status, row) => <Select value={status} size="small" className="attendance-status-select" style={{ width: 115 }} onChange={(value) => updateBatchStatus(row, value)} options={batchStatusOptions} /> }
   ];
 
   if (isAdmin) {
-    batchColumns.push({
-      title: "Actions", width: 125, align: "center",
-      render: (_, row) => (
-        <Space size="small">
-          <Button icon={<FiEdit2 />} onClick={() => openEditBatch(row)}>Edit</Button>
-          <Popconfirm title="Delete this batch?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteBatch(row)}>
-            <Button danger icon={<FiTrash2 />} />
-          </Popconfirm>
-        </Space>
-      )
+    batchColumns.splice(5, 0, { 
+      title: "Branch", 
+      dataIndex: "branch", 
+      width: 140, 
+      render: (branch) => <Tag color="blue">{branch || "Main Branch"}</Tag> 
     });
   }
+
+  // Available to BOTH (Admins and Franchises can manage their batches)
+  batchColumns.push({
+    title: "Actions", width: 125, align: "center",
+    render: (_, row) => (
+      <Space size="small">
+        <Button icon={<FiEdit2 />} onClick={() => openEditBatch(row)}>Edit</Button>
+        <Popconfirm title="Delete this batch?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteBatch(row)}>
+          <Button danger icon={<FiTrash2 />} />
+        </Popconfirm>
+      </Space>
+    )
+  });
 
   const batchToolbar = (
     <div className="section-toolbar">
@@ -153,7 +189,7 @@ export default function Courses() {
         <Input.Search allowClear enterButton={<FiSearch />} placeholder="Search batch, course..." value={batchFilters.search} onChange={(event) => applyBatchFilters({ search: event.target.value })} onSearch={(value) => applyBatchFilters({ search: value })} className="live-search-input" style={{ width: 300 }} />
         <Select allowClear placeholder="Status" value={batchFilters.status || undefined} onChange={(value) => applyBatchFilters({ status: value || "" })} options={batchStatusOptions} style={{ width: 170 }} />
         <Button onClick={() => applyBatchFilters({ search: "", status: "" })}>Reset</Button>
-        {isAdmin && <Button type="primary" icon={<FiPlus />} onClick={openNewBatch}>Add Batch</Button>}
+        <Button type="primary" icon={<FiPlus />} onClick={openNewBatch}>Add Batch</Button>
       </Space>
     </div>
   );
@@ -200,6 +236,11 @@ export default function Courses() {
             <Form.Item name="startDate" label="Start Date"><DatePicker /></Form.Item>
             <Form.Item name="endDate" label="End Date"><DatePicker /></Form.Item>
           </Space>
+          {isAdmin && (
+            <Form.Item name="branch" label="Branch / Centre" initialValue="Main Branch">
+              <Input placeholder="e.g. Main Branch, BIIT Khejuri" />
+            </Form.Item>
+          )}
           <Form.Item name="status" label="Status"><Select options={batchStatusOptions} /></Form.Item>
         </Form>
       </Modal>

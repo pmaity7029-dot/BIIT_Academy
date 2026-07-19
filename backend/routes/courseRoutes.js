@@ -2,6 +2,7 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import Course from '../models/Course.js';
 import Batch from '../models/Batch.js';
+import Student from '../models/Student.js';
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -59,6 +60,9 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
   const { search = '', status = '' } = req.query;
   const query = {};
 
+  // Restrict to franchise branch if user is a franchise
+  if (req.user.role === 'FRANCHISE') query.branch = req.user.branch;
+
   if (status) query.status = status;
   if (search) {
     const regex = buildSearchRegex(search);
@@ -69,28 +73,54 @@ router.get('/batches/list', asyncHandler(async (req, res) => {
     ];
   }
 
-  res.json(await Batch.find(query).populate('course').sort({ createdAt: -1 }));
+  const batches = await Batch.find(query).populate('course').sort({ createdAt: -1 });
+
+  // Calculate students per batch for overview
+  const batchesWithCount = await Promise.all(batches.map(async (batch) => {
+    const studentQuery = { batch: batch.name };
+    if (req.user.role === 'FRANCHISE') studentQuery.branch = req.user.branch;
+    else if (batch.branch) studentQuery.branch = batch.branch;
+
+    const studentCount = await Student.countDocuments(studentQuery);
+    return { ...batch.toObject(), studentCount };
+  }));
+
+  res.json(batchesWithCount);
 }));
 
-router.post('/batches', adminOnly, asyncHandler(async (req, res) => {
-  res.status(201).json(await Batch.create(sanitizeBatchPayload(req.body)));
-}));
-
-router.put('/batches/:id', adminOnly, asyncHandler(async (req, res) => {
-  const batch = await Batch.findByIdAndUpdate(req.params.id, sanitizeBatchPayload(req.body), { new: true, runValidators: true }).populate('course');
-  if (!batch) {
-    res.status(404);
-    throw new Error('Batch not found.');
+router.post('/batches', asyncHandler(async (req, res) => {
+  const payload = sanitizeBatchPayload(req.body);
+  
+  if (req.user.role === 'FRANCHISE') {
+    payload.branch = req.user.branch;
+  } else if (!payload.branch) {
+    payload.branch = 'Main Branch';
   }
+  
+  res.status(201).json(await Batch.create(payload));
+}));
+
+router.put('/batches/:id', asyncHandler(async (req, res) => {
+  const existing = await Batch.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
+    res.status(404);
+    throw new Error('Batch not found or unauthorized.');
+  }
+
+  const payload = sanitizeBatchPayload(req.body);
+  if (req.user.role === 'FRANCHISE') payload.branch = req.user.branch;
+
+  const batch = await Batch.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true }).populate('course');
   res.json(batch);
 }));
 
-router.delete('/batches/:id', adminOnly, asyncHandler(async (req, res) => {
-  const batch = await Batch.findByIdAndDelete(req.params.id);
-  if (!batch) {
+router.delete('/batches/:id', asyncHandler(async (req, res) => {
+  const existing = await Batch.findById(req.params.id);
+  if (!existing || (req.user.role === 'FRANCHISE' && existing.branch !== req.user.branch)) {
     res.status(404);
-    throw new Error('Batch not found.');
+    throw new Error('Batch not found or unauthorized.');
   }
+  await Batch.findByIdAndDelete(req.params.id);
   res.json({ message: 'Batch deleted successfully.' });
 }));
 

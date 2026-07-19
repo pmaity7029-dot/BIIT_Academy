@@ -1,6 +1,6 @@
 import { Button, Card, Drawer, Form, Grid, Input, Popconfirm, Select, Space, Table, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiEye, FiPlus, FiSearch, FiTrash2, FiUsers } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import api from '../api/client.js';
@@ -19,7 +19,13 @@ const cleanParams = (params) => {
 
 export default function Students() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form] = Form.useForm();
+  
+  // Accept batch from URL if routed from Courses table
+  const queryParams = new URLSearchParams(location.search);
+  const initialBatch = queryParams.get('batch') || '';
+
   const [students, setStudents] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
   const [courseOptions, setCourseOptions] = useState([]);
@@ -32,15 +38,21 @@ export default function Students() {
     navigate(`/admin/students/${studentId}`);
   };
 
-  const [filters, setFilters] = useState({ search: '', status: '', batch: '' });
+  const [filters, setFilters] = useState({ search: '', status: '', batch: initialBatch });
 
   const loadBatches = async () => {
     try {
       const { data } = await api.get('/courses/batches/list');
       const validBatches = (data || []).map((batch) => batch.name).filter(Boolean);
-      setBatchOptions(validBatches.sort((a, b) => String(a).localeCompare(String(b))));
+      
+      // Merge with initial batch if not already present
+      let finalBatches = validBatches;
+      if (initialBatch && !finalBatches.includes(initialBatch)) {
+        finalBatches.push(initialBatch);
+      }
+      setBatchOptions(finalBatches.sort((a, b) => String(a).localeCompare(String(b))));
     } catch (error) {
-      setBatchOptions([]);
+      setBatchOptions(initialBatch ? [initialBatch] : []);
     }
   };
 
@@ -114,6 +126,8 @@ export default function Students() {
   const resetFilters = () => {
     const nextFilters = { search: '', status: '', batch: '' };
     setFilters(nextFilters);
+    // Clear URL param without reloading
+    navigate('/admin/students', { replace: true });
     load(nextFilters);
   };
 

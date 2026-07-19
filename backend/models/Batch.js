@@ -12,7 +12,8 @@ const batchSchema = new mongoose.Schema(
       type: String,
       enum: ['Active', 'Inactive', 'Completed', 'Upcoming', 'Running'],
       default: 'Active'
-    }
+    },
+    branch: { type: String, trim: true, default: 'Main Branch' }
   },
   { timestamps: true }
 );

@@ -30,6 +30,7 @@ import api from "../api/client.js";
 import PageHeader from "../components/PageHeader.jsx";
 import { ShimmerTable } from "../components/ShimmerLoading.jsx";
 import { printExactElement } from "../utils/printElement.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import React from "react";
 
 const RECEIPT_PAGE_STYLES = `
@@ -134,6 +135,9 @@ const exportToCSV = (data, columns, filename) => {
 };
 
 export default function Payments() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  
   const [payments, setPayments] = useState([]);
   const [duesData, setDuesData] = useState([]);
   const [students, setStudents] = useState([]);
@@ -215,7 +219,7 @@ export default function Payments() {
       loadData(filters);
       loadDues(duesFilters);
     } catch (error) {
-      if (!error.errorFields) message.error("Payment save failed");
+      if (!error.errorFields) message.error(error?.response?.data?.message || "Payment save failed");
     }
   };
 
@@ -278,7 +282,8 @@ export default function Payments() {
         mode: "Cash",
         status: "Paid",
         paidDate: dayjs(),
-        description: ""
+        description: "",
+        collectedByName: user?.name || ""
       });
     } else {
       form.resetFields();
@@ -286,7 +291,8 @@ export default function Payments() {
         mode: "Cash",
         status: "Paid",
         paidDate: dayjs(),
-        month: dayjs()
+        month: dayjs(),
+        collectedByName: user?.name || ""
       });
     }
     setOpen(true);
@@ -300,6 +306,10 @@ export default function Payments() {
       windowSize: "width=900,height=1100",
     });
   };
+
+  // Separate data for Super Admin nested tabs
+  const myBranchDues = duesData.filter(d => d.student?.branch === user?.branch);
+  const otherBranchDues = duesData.filter(d => d.student?.branch !== user?.branch);
 
   const columns = [
     { title: "Receipt No.", dataIndex: "receiptNo", width: 165 },
@@ -431,16 +441,20 @@ export default function Payments() {
     },
     {
       title: "Action",
-      width: 120,
-      render: (_, row) => (
-        <Button 
-          type="primary" 
-          disabled={row.status === 'Paid'} 
-          onClick={() => openPaymentModal(row)}
-        >
-          {row.status === 'Paid' ? 'Paid' : 'Pay Now'}
-        </Button>
-      ),
+      width: 160,
+      render: (_, row) => {
+        const isMyBranch = row.student?.branch === user?.branch;
+        const isPaid = row.status === 'Paid';
+        return (
+          <Button 
+            type={isPaid ? "default" : (isMyBranch ? "primary" : "default")}
+            disabled={isPaid || !isMyBranch} 
+            onClick={() => openPaymentModal(row)}
+          >
+            {isPaid ? 'Paid' : (!isMyBranch ? (row.student?.branch || 'Other Branch') : 'Pay Now')}
+          </Button>
+        );
+      },
     },
   ];
 
@@ -532,7 +546,7 @@ export default function Payments() {
               </strong>
             </div>
             <div className="receipt-footer">
-              <p>Collected by: {selected.collectedBy?.name || "Super Admin"}</p>
+              <p>Received by: {selected.collectedByName || selected.collectedBy?.name || "Admin"}</p>
               <p>This is a computer-generated receipt.</p>
             </div>
           </div>
@@ -598,6 +612,39 @@ export default function Payments() {
                   </div>
                   {duesLoading ? (
                     <ShimmerTable columns={7} rows={7} />
+                  ) : isAdmin ? (
+                    <Tabs
+                      type="card"
+                      style={{ marginTop: 16 }}
+                      items={[
+                        {
+                          key: 'my-branch',
+                          label: `${user?.branch || 'Main Branch'} Students (${myBranchDues.length})`,
+                          children: (
+                            <Table
+                              rowKey="key"
+                              columns={duesColumns}
+                              dataSource={myBranchDues}
+                              scroll={{ x: "max-content" }}
+                              tableLayout="auto"
+                            />
+                          )
+                        },
+                        {
+                          key: 'other-branches',
+                          label: `Other Franchise Students (${otherBranchDues.length})`,
+                          children: (
+                            <Table
+                              rowKey="key"
+                              columns={duesColumns}
+                              dataSource={otherBranchDues}
+                              scroll={{ x: "max-content" }}
+                              tableLayout="auto"
+                            />
+                          )
+                        }
+                      ]}
+                    />
                   ) : (
                     <Table
                       rowKey="key"
@@ -688,7 +735,9 @@ export default function Payments() {
             <Select
               showSearch
               optionFilterProp="label"
-              options={students.map((student) => ({
+              options={students
+                .filter((s) => s.branch === user?.branch)
+                .map((student) => ({
                 value: student._id,
                 label: `${student.name} - ${student.regNo}`,
               }))}
@@ -719,6 +768,15 @@ export default function Payments() {
           <Form.Item name="paidDate" label="Payment Date">
             <DatePicker className="full-width" />
           </Form.Item>
+          
+          <Form.Item 
+             name="collectedByName" 
+             label="Payment Received By (Name)" 
+             rules={[{ required: true, message: 'Please enter the name of the receiver' }]}
+          >
+            <Input placeholder="Enter receiver's name" />
+          </Form.Item>
+
           <Form.Item name="description" label="Description">
             <Input.TextArea rows={2} placeholder="Optional notes" />
           </Form.Item>

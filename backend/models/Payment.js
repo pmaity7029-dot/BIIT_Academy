@@ -16,7 +16,8 @@ const paymentSchema = new mongoose.Schema(
     description: { type: String, trim: true },
     branch: { type: String, trim: true, default: 'Main Branch' },
     paidDate: { type: Date, default: Date.now },
-    collectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    collectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    collectedByName: { type: String, trim: true }
   },
   { timestamps: true }
 );
