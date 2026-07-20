@@ -14,6 +14,7 @@ import mailRoutes from './routes/mailRoutes.js';
 import performanceRoutes from './routes/performanceRoutes.js';
 import idCardRoutes from './routes/idCardRoutes.js';
 import franchiseRoutes from './routes/franchiseRoutes.js';
+import websiteRoutes from './routes/websiteRoutes.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/mail', mailRoutes);
 app.use('/api/performance', performanceRoutes);
 app.use('/api/id-cards', idCardRoutes);
+app.use('/api/website', websiteRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

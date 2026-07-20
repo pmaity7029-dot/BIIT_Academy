@@ -3,14 +3,32 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { 
   FiArrowRight, FiAward, FiBookOpen, FiMonitor, 
-  FiPhone, FiUsers, FiStar, FiMenu 
+  FiPhone, FiUsers, FiStar, FiMenu, FiHome 
 } from 'react-icons/fi';
+import api from '../api/client.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Website() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [successStories, setSuccessStories] = useState([]);
 
-  // Scroll Reveal Animation Logic
+  useEffect(() => {
+    const fetchWebsiteContent = async () => {
+      try {
+        const { data } = await api.get('/website');
+        setCourses(data.courses || []);
+        setSuccessStories(data.successStories || []);
+      } catch (error) {
+        setCourses([]);
+        setSuccessStories([]);
+      }
+    };
+    fetchWebsiteContent();
+  }, []);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -29,89 +47,13 @@ export default function Website() {
     return () => observer.disconnect();
   }, []);
 
-  const courses = [
-    {
-      id: 1,
-      title: "Certificate in Computer Application (C.C.A)",
-      duration: "6 Months / 120 Hrs (Fast Track)",
-      eligibility: "10th STANDARD",
-      desc: "Computer Fundamentals, MS-DOS, Windows (7,10,11), MS-Office (Word, Excel, PowerPoint), Basic Hardware, Concept of software and computer Languages. Internet Browsing, Upload, Download, Email creation, Compose mail, Send mail, English & Bengali Typing."
-    },
-    {
-      id: 2,
-      title: "Diploma in Computer Application (D.C.A) + Tally (Basic)",
-      duration: "12 Months / 240 Hrs (Fast Track)",
-      eligibility: "10th STANDARD",
-      desc: "Content of C.C.A + Concept of RDMS and MS-access, Basics of Visual Basic, HTML, Online Data entry. Tally Erp 9, Tally prime (Accounting Fundamentals, Voucher Entries, Inventory Management, ledger setup, Trial Balance, P&L, Balance Sheets, GST and Payroll basics)."
-    },
-    {
-      id: 3,
-      title: "Advanced Diploma in Computer Application + Tally (Professional)",
-      duration: "18 Months / 360 Hrs",
-      eligibility: "12th STANDARD",
-      desc: "Content of D.C.A + Bio-data & CV making, GST Setup & Configuration, GST Returns Filing (GSTR-1, GSTR-3B) & E-Way Bills, TDS/TCS basics, Bank Reconciliation, Online Banking, Budgets, Financial Statements, Data Backup, Audit, Salary Structures, PF/ESI, MIS reports."
-    },
-    {
-      id: 4,
-      title: "Diploma in Desktop Publishing Professional (D.D.P.P)",
-      duration: "12 Months / 240 Hrs (Fast Track)",
-      eligibility: "10th STANDARD",
-      desc: "Computer Fundamentals, MS-DOS, Windows, MS-Office (Word, Excel, PowerPoint), Internet & e-mail, Adobe Photoshop, Page Maker, Corel Draw."
-    },
-    {
-      id: 5,
-      title: "Diploma in Hardware and Networking",
-      duration: "12 Months / 240 Hrs (Fast Track)",
-      eligibility: "12th Computer knowledge",
-      desc: "PC Hardware, Networking, Laptops, Printers, Windows 7/10/11, Linux OS (Fedora, Ubuntu, RedHat), Modules of C.C.A."
-    },
-    {
-      id: 6,
-      title: "Basic Python Concept & Programming",
-      duration: "6 Months / 120 Hrs",
-      eligibility: "10th STANDARD",
-      desc: "Introduction to Programming, Setting up the Environment, Basic Syntax, Variables, Basic Data Types, Input and Output, Conditional Statements, Loops, Lists, Tuples, File Operations, OOP Introduction, Polymorphism and Encapsulation etc."
-    },
-    {
-      id: 7,
-      title: "Diploma in Animation and Multimedia",
-      duration: "18 Months / 360 Hrs",
-      eligibility: "12th Computer knowledge",
-      desc: "Computer basics, Fundamental of Animation, 2D & 3D animation, digital art, storyboarding. Core skills in 2D/3D modeling, texturing, rigging, lighting (Maya, After Effects, Photoshop). Sound design, video editing, game/VFX production for professional portfolios."
-    },
-    {
-      id: 8,
-      title: "Diploma in Graphic Design & Video Editing",
-      duration: "18 Months / 360 Hrs",
-      eligibility: "12th Computer knowledge",
-      desc: "Introduction to computer, Design fundamentals, image editing (Photoshop/Lightroom), video editing (Premiere Pro/Resolve), color correction/grading, motion graphics (After Effects), sound design, storytelling and post-production workflow."
-    },
-    {
-      id: 9,
-      title: "Certified Industrial Accountant (CIA)",
-      duration: "18 Months / 360 Hrs",
-      eligibility: "12th Computer knowledge",
-      desc: "Fundamental of Accounts with Bookkeeping, Business Fundamentals Accounting, Business Taxation Fundamentals, Analysis of Financial Statements, Introduction To Financial Markets, Applied Statutory Compliance."
-    }
-  ];
-
-  const successStories = [
-    { name: "Surajit Bera", role: "Maintenance Engineer", company: "Jahanabad Royal Infrastructure Ltd (Kolkata)" },
-    { name: "Sadhan Bhunia", role: "Manager", company: "Khejuri SKUS Ltd." },
-    { name: "Supriti Karan", role: "GDS ABPM India", company: "Kamarda Postal Department" },
-    { name: "Surya Kanta Gayen", role: "Restaurant Captain", company: "Bengaluru" },
-    { name: "Soumya Kanti Maity", role: "Tax consultant (freelance)", company: "Navi Mumbai" },
-    { name: "Nibedita Sasmal", role: "GDS ABPM (TAKAPURA BO)", company: "Takapura, Purba Medinipur" }
-  ];
-
   const closeMenu = () => setMobileMenuOpen(false);
 
   return (
     <div className="site-page">
       <header className="site-header">
-        <div className="site-brand"><FiMonitor /> <span>BIIT</span></div>
+        <div className="site-brand" onClick={() => navigate('/')}><FiMonitor /> <span>BIIT</span></div>
         
-        {/* Desktop Navigation */}
         <nav className="desktop-nav">
           <a href="#about" className="nav-link">About</a>
           <a href="#courses" className="nav-link">Courses</a>
@@ -119,11 +61,16 @@ export default function Website() {
           <a href="#contact" className="nav-link">Contact</a>
         </nav>
 
-        {/* Right Actions (Visible on both Mobile & Desktop) */}
         <div className="header-right">
-          <Button type="primary" size="large" className="nav-admin-btn" onClick={() => navigate('/admin')}>
-            Admin Login
-          </Button>
+          {isAuthenticated ? (
+            <Button type="primary" size="large" className="nav-admin-btn" icon={<FiHome />} onClick={() => navigate('/admin/dashboard')}>
+              Dashboard
+            </Button>
+          ) : (
+            <Button type="primary" size="large" className="nav-admin-btn" onClick={() => navigate('/admin')}>
+              Admin Login
+            </Button>
+          )}
           <Button 
             className="mobile-menu-toggle" 
             type="text" 
@@ -133,7 +80,6 @@ export default function Website() {
         </div>
       </header>
 
-      {/* Mobile Menu Drawer */}
       <Drawer
         title="BIIT Navigation"
         placement="right"
@@ -147,6 +93,15 @@ export default function Website() {
           <a href="#courses" className="nav-link" onClick={closeMenu}>Courses</a>
           <a href="#success" className="nav-link" onClick={closeMenu}>Success Stories</a>
           <a href="#contact" className="nav-link" onClick={closeMenu}>Contact</a>
+          {isAuthenticated ? (
+            <Button type="primary" block icon={<FiHome />} onClick={() => { closeMenu(); navigate('/admin/dashboard'); }} style={{ marginTop: '10px' }}>
+              Dashboard
+            </Button>
+          ) : (
+            <Button type="primary" block onClick={() => { closeMenu(); navigate('/admin'); }} style={{ marginTop: '10px' }}>
+              Admin Login
+            </Button>
+          )}
         </div>
       </Drawer>
 
@@ -202,7 +157,7 @@ export default function Website() {
         <Typography.Title level={2} className="section-heading">Our Professional Courses</Typography.Title>
         <Row gutter={[24, 24]} align="stretch">
           {courses.map((course, index) => (
-            <Col xs={24} lg={8} md={12} key={course.id} style={{ display: 'flex' }}>
+            <Col xs={24} lg={8} md={12} key={course._id || index} style={{ display: 'flex' }}>
               <Card 
                 className="course-card interactive-card" 
                 bordered={false} 
@@ -213,7 +168,7 @@ export default function Website() {
                   <h3 style={{ fontSize: '22px', marginTop: 0, marginBottom: '16px' }}>{course.title}</h3>
                   <div style={{ marginBottom: '16px' }}>
                     <Tag color="blue" style={{ marginBottom: '8px', fontSize: '15px', padding: '6px 10px', borderRadius: '6px' }}>Duration: {course.duration}</Tag>
-                    <Tag color="gold" style={{ fontSize: '15px', padding: '6px 10px', borderRadius: '6px' }}>Eligibility: {course.eligibility}</Tag>
+                    {course.eligibility && <Tag color="gold" style={{ fontSize: '15px', padding: '6px 10px', borderRadius: '6px' }}>Eligibility: {course.eligibility}</Tag>}
                   </div>
                   <p style={{ color: '#6f7f95', fontSize: '16px', lineHeight: '1.7', flexGrow: 1 }}>{course.desc}</p>
                 </div>
@@ -225,20 +180,24 @@ export default function Website() {
 
       <section id="success" className="site-section reveal">
         <Typography.Title level={2} className="section-heading">সাফল্যের প্রতিচ্ছবি... (Success Stories)</Typography.Title>
-        <Row gutter={[24, 24]} align="stretch">
-          {successStories.map((story, idx) => (
-            <Col xs={24} sm={12} md={8} lg={4} key={idx} style={{ display: 'flex' }}>
-              <Card className="feature-card interactive-card" bordered={false} style={{ width: '100%', display: 'flex', flexDirection: 'column', textAlign: 'center', padding: '24px 10px', animationDelay: `${idx * 0.1}s` }}>
-                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                  <Avatar size={84} className="success-avatar" icon={<FiStar style={{ fontSize: '36px' }} />} />
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '20px' }}>{story.name}</h4>
-                  <p style={{ margin: 0, fontSize: '16px', color: '#143f75', fontWeight: 'bold' }}>{story.role}</p>
-                  <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#6f7f95', lineHeight: '1.5' }}>{story.company}</p>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        
+        {/* Right to left scrolling marquee container */}
+        <div className="marquee-container">
+          <div className="marquee-track">
+            {successStories.concat(successStories).map((story, idx) => (
+              <div className="marquee-item" key={idx}>
+                <Card className="feature-card interactive-card success-story-card" bordered={false} style={{ width: '280px', display: 'flex', flexDirection: 'column', textAlign: 'center', padding: '24px 10px' }}>
+                  <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    <Avatar size={84} className="success-avatar" icon={<FiStar style={{ fontSize: '36px' }} />} />
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '20px' }}>{story.name}</h4>
+                    <p style={{ margin: 0, fontSize: '16px', color: '#143f75', fontWeight: 'bold' }}>{story.role}</p>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#6f7f95', lineHeight: '1.5' }}>{story.company}</p>
+                  </div>
+                </Card>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <footer id="contact" className="site-footer reveal">
@@ -256,8 +215,8 @@ export default function Website() {
             </div>
           </Col>
           <Col xs={24} md={8} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Button type="primary" size="large" className="footer-btn animated-btn" onClick={() => navigate('/admin')}>
-              Go to Admin Panel
+            <Button type="primary" size="large" className="footer-btn animated-btn" onClick={() => navigate(isAuthenticated ? '/admin/dashboard' : '/admin')}>
+              {isAuthenticated ? 'Go to Dashboard' : 'Go to Admin Panel'}
             </Button>
           </Col>
         </Row>
@@ -265,7 +224,3 @@ export default function Website() {
     </div>
   );
 }
-
-
-
-

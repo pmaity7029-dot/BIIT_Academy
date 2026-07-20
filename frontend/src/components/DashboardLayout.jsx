@@ -15,8 +15,8 @@ import {
   FiUsers,
   FiX,
   FiShield,
-  FiLock,
-  FiUser
+  FiUser,
+  FiGlobe
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -30,10 +30,6 @@ export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getMenuItems = () => {
-    if (user?.mustChangePassword) {
-      return [{ key: '/admin/change-password', icon: <FiLock />, label: 'Change Password' }];
-    }
-
     const items = [
       { key: '/admin/dashboard', icon: <FiHome />, label: 'Dashboard' },
       {
@@ -75,14 +71,11 @@ export default function DashboardLayout() {
         type: 'group',
         label: 'Administration',
         children: [
-          { key: '/admin/franchises', icon: <FiShield />, label: 'Franchises' }
+          { key: '/admin/franchises', icon: <FiShield />, label: 'Franchises' },
+          { key: '/admin/website-editor', icon: <FiGlobe />, label: 'Website Editor' }
         ]
       });
     }
-
-    items.push({
-      key: '/admin/change-password', icon: <FiLock />, label: 'Change Password'
-    });
 
     return items;
   };

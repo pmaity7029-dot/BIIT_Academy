@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import React from 'react';
 
@@ -17,9 +17,8 @@ import Payments from './pages/Payments.jsx';
 import Certificates from './pages/Certificates.jsx';
 import Messages from './pages/Messages.jsx';
 import IdCards from './pages/IdCards.jsx';
-
-import ChangePassword from './pages/ChangePassword.jsx';
 import Franchises from './pages/Franchises.jsx';
+import WebsiteEditor from './pages/WebsiteEditor.jsx';
 
 const routerFutureFlags = {
   v7_startTransition: true,
@@ -27,15 +26,10 @@ const routerFutureFlags = {
 };
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
-  }
-
-  if (user?.mustChangePassword && location.pathname !== '/admin/change-password') {
-    return <Navigate to="/admin/change-password" replace />;
   }
 
   return children;
@@ -87,8 +81,8 @@ export default function App() {
           <Route path="certificates" element={<Certificates />} />
           <Route path="id-cards" element={<IdCards />} />
           <Route path="messages" element={<Messages />} />
-          <Route path="change-password" element={<ChangePassword />} />
           <Route path="franchises" element={<Franchises />} />
+          <Route path="website-editor" element={<WebsiteEditor />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -24,8 +24,7 @@ router.post('/login', asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      branch: user.branch,
-      mustChangePassword: user.mustChangePassword
+      branch: user.branch
     }
   });
 }));
@@ -36,27 +35,8 @@ router.get('/me', protect, asyncHandler(async (req, res) => {
     name: req.user.name,
     email: req.user.email,
     role: req.user.role,
-    branch: req.user.branch,
-    mustChangePassword: req.user.mustChangePassword
+    branch: req.user.branch
   });
-}));
-
-router.post('/change-password', protect, asyncHandler(async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
-  const user = await User.findById(req.user._id);
-
-  if (user.mustChangePassword === false) {
-    if (!oldPassword || !(await user.matchPassword(oldPassword))) {
-      res.status(401);
-      throw new Error('Incorrect current password.');
-    }
-  }
-
-  user.password = newPassword;
-  user.mustChangePassword = false;
-  await user.save();
-
-  res.json({ message: 'Password updated successfully' });
 }));
 
 router.post('/forgot-password', asyncHandler(async (req, res) => {
@@ -97,7 +77,6 @@ router.post('/reset-password/:token', asyncHandler(async (req, res) => {
   }
 
   user.password = req.body.password;
-  user.mustChangePassword = false;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
   await user.save();
