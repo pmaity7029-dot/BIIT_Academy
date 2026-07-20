@@ -18,6 +18,7 @@ import Certificates from './pages/Certificates.jsx';
 import Messages from './pages/Messages.jsx';
 import IdCards from './pages/IdCards.jsx';
 import Franchises from './pages/Franchises.jsx';
+import SubAdmins from './pages/SubAdmins.jsx';
 import WebsiteEditor from './pages/WebsiteEditor.jsx';
 
 const routerFutureFlags = {
@@ -27,21 +28,13 @@ const routerFutureFlags = {
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
-  }
-
+  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
   return children;
 };
 
 const GuestRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
-
-  if (isAuthenticated) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
+  if (isAuthenticated) return <Navigate to="/admin/dashboard" replace />;
   return children;
 };
 
@@ -51,25 +44,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Website />} />
 
-        <Route
-          path="/admin/login"
-          element={
-            <GuestRoute>
-              <AdminLogin />
-            </GuestRoute>
-          }
-        />
-
+        <Route path="/admin/login" element={<GuestRoute><AdminLogin /></GuestRoute>} />
         <Route path="/admin/reset-password/:token" element={<ResetPassword />} />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/admin" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="students" element={<Students />} />
@@ -82,6 +60,7 @@ export default function App() {
           <Route path="id-cards" element={<IdCards />} />
           <Route path="messages" element={<Messages />} />
           <Route path="franchises" element={<Franchises />} />
+          <Route path="sub-admins" element={<SubAdmins />} />
           <Route path="website-editor" element={<WebsiteEditor />} />
         </Route>
 

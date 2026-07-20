@@ -5,11 +5,11 @@ import Student from '../models/Student.js';
 import Payment from '../models/Payment.js';
 import Attendance from '../models/Attendance.js';
 import Certificate from '../models/Certificate.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { protect, superAdminOnly } from '../middleware/authMiddleware.js';
 import { sendMail } from '../utils/email.js';
 
 const router = express.Router();
-router.use(protect, adminOnly);
+router.use(protect, superAdminOnly);
 
 router.get('/', asyncHandler(async (req, res) => {
   const franchises = await User.find({ role: 'FRANCHISE' }).select('-password').sort({ createdAt: -1 });

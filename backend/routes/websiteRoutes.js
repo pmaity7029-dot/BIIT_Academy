@@ -1,7 +1,7 @@
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import WebsiteContent from '../models/WebsiteContent.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { protect, superAdminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -28,11 +28,7 @@ const defaultCourses = [
 
 const defaultSuccessStories = [
   { name: "Surajit Bera", role: "Maintenance Engineer", company: "Jahanabad Royal Infrastructure Ltd (Kolkata)" },
-  { name: "Sadhan Bhunia", role: "Manager", company: "Khejuri SKUS Ltd." },
-  { name: "Supriti Karan", role: "GDS ABPM India", company: "Kamarda Postal Department" },
-  { name: "Surya Kanta Gayen", role: "Restaurant Captain", company: "Bengaluru" },
-  { name: "Soumya Kanti Maity", role: "Tax consultant (freelance)", company: "Navi Mumbai" },
-  { name: "Nibedita Sasmal", role: "GDS ABPM (TAKAPURA BO)", company: "Takapura, Purba Medinipur" }
+  { name: "Sadhan Bhunia", role: "Manager", company: "Khejuri SKUS Ltd." }
 ];
 
 router.get('/', asyncHandler(async (req, res) => {
@@ -46,7 +42,7 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(content);
 }));
 
-router.put('/', protect, adminOnly, asyncHandler(async (req, res) => {
+router.put('/', protect, superAdminOnly, asyncHandler(async (req, res) => {
   const { courses, successStories } = req.body;
   let content = await WebsiteContent.findOne();
   if (!content) {

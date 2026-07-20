@@ -14,6 +14,7 @@ import mailRoutes from './routes/mailRoutes.js';
 import performanceRoutes from './routes/performanceRoutes.js';
 import idCardRoutes from './routes/idCardRoutes.js';
 import franchiseRoutes from './routes/franchiseRoutes.js';
+import subAdminRoutes from './routes/subAdminRoutes.js';
 import websiteRoutes from './routes/websiteRoutes.js';
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/franchise', franchiseRoutes);
+app.use('/api/sub-admins', subAdminRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/courses', courseRoutes);
@@ -60,17 +62,14 @@ const MAX_PORT_RETRY = 5;
 const startServer = (port, retryCount = 0) => {
   const server = app.listen(port, () => {
     console.log(`BIIT backend running on port ${port}`);
-    console.log(`API Health: http://localhost:${port}/api/health`);
   });
 
   server.on('error', (error) => {
     if (error.code === 'EADDRINUSE' && retryCount < MAX_PORT_RETRY) {
       const nextPort = port + 1;
-      console.warn(`Port ${port} is already in use. Trying port ${nextPort}...`);
       startServer(nextPort, retryCount + 1);
       return;
     }
-
     console.error('Server failed to start:', error.message);
     process.exit(1);
   });

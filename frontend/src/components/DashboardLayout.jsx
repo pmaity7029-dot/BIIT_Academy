@@ -66,13 +66,23 @@ export default function DashboardLayout() {
       }
     ];
 
-    if (user?.role === 'ADMIN') {
+    if (user?.actualRole === 'ADMIN') {
       items.push({
         type: 'group',
         label: 'Administration',
         children: [
           { key: '/admin/franchises', icon: <FiShield />, label: 'Franchises' },
           { key: '/admin/website-editor', icon: <FiGlobe />, label: 'Website Editor' }
+        ]
+      });
+    }
+
+    if (user?.actualRole === 'ADMIN' || user?.actualRole === 'FRANCHISE') {
+      items.push({
+        type: 'group',
+        label: 'Branch Management',
+        children: [
+          { key: '/admin/sub-admins', icon: <FiShield />, label: 'Sub Admins / Teachers' }
         ]
       });
     }

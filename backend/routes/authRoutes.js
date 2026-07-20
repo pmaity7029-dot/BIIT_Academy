@@ -17,13 +17,21 @@ router.post('/login', asyncHandler(async (req, res) => {
     throw new Error('Invalid email or password.');
   }
 
+  if (user.status === 'Inactive') {
+    res.status(401);
+    throw new Error('Your account is deactivated. Contact your Head Admin.');
+  }
+
+  const effectiveRole = user.role === 'SUB_ADMIN' ? (user.branch === 'Main Branch' ? 'ADMIN' : 'FRANCHISE') : user.role;
+
   res.json({
     token: generateToken(user._id),
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: effectiveRole,
+      actualRole: user.role,
       branch: user.branch
     }
   });
@@ -34,7 +42,8 @@ router.get('/me', protect, asyncHandler(async (req, res) => {
     id: req.user._id,
     name: req.user.name,
     email: req.user.email,
-    role: req.user.role,
+    role: req.user.role, 
+    actualRole: req.user.actualRole,
     branch: req.user.branch
   });
 }));
@@ -43,9 +52,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email: String(email || '').toLowerCase() });
 
-  if (!user) {
-    return res.json({ message: 'If the email exists, a reset link has been sent.' });
-  }
+  if (!user) return res.json({ message: 'If the email exists, a reset link has been sent.' });
 
   const rawToken = crypto.randomBytes(32).toString('hex');
   user.resetPasswordToken = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -66,15 +73,9 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
 
 router.post('/reset-password/:token', asyncHandler(async (req, res) => {
   const hashed = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  const user = await User.findOne({
-    resetPasswordToken: hashed,
-    resetPasswordExpires: { $gt: new Date() }
-  });
+  const user = await User.findOne({ resetPasswordToken: hashed, resetPasswordExpires: { $gt: new Date() } });
 
-  if (!user) {
-    res.status(400);
-    throw new Error('Reset link is invalid or expired.');
-  }
+  if (!user) { res.status(400); throw new Error('Reset link is invalid or expired.'); }
 
   user.password = req.body.password;
   user.resetPasswordToken = undefined;
