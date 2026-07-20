@@ -32,7 +32,8 @@ router.post('/login', asyncHandler(async (req, res) => {
       email: user.email,
       role: effectiveRole,
       actualRole: user.role,
-      branch: user.branch
+      branch: user.branch,
+      mustChangePassword: user.mustChangePassword // Explicitly returned flag
     }
   });
 }));
@@ -46,6 +47,22 @@ router.get('/me', protect, asyncHandler(async (req, res) => {
     actualRole: req.user.actualRole,
     branch: req.user.branch
   });
+}));
+
+// Route to handle forced password change 
+router.put('/change-password', protect, asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  
+  if (!user) { 
+    res.status(404); 
+    throw new Error('User not found.'); 
+  }
+
+  user.password = req.body.password;
+  user.mustChangePassword = false;
+  await user.save();
+
+  res.json({ message: 'Password updated successfully.' });
 }));
 
 router.post('/forgot-password', asyncHandler(async (req, res) => {

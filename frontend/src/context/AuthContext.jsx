@@ -45,13 +45,20 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (data) => {
+    const updatedUser = { ...user, ...data };
+    setUser(updatedUser);
+    localStorage.setItem('biit_user', JSON.stringify(updatedUser));
+  };
+
   const value = useMemo(
     () => ({
       token,
       user,
       isAuthenticated: Boolean(token && user),
       login,
-      logout
+      logout,
+      updateUser
     }),
     [token, user]
   );

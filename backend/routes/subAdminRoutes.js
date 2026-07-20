@@ -2,6 +2,7 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 import { protect, headAdminOnly } from '../middleware/authMiddleware.js';
+import { sendMail } from '../utils/email.js'; // Added email import
 
 const router = express.Router();
 router.use(protect, headAdminOnly);
@@ -34,6 +35,14 @@ router.post('/', asyncHandler(async (req, res) => {
     branch: targetBranch,
     status: 'Active',
     mustChangePassword: true
+  });
+
+  // Automatically Send Email to Sub-Admin with credentials
+  await sendMail({
+    to: user.email,
+    subject: 'Welcome to BIIT - Sub Admin / Teacher Account',
+    text: `Hello ${name},\n\nYour account has been created.\nEmail: ${user.email}\nPassword: ${password}\n\nPlease login and change your password.`,
+    html: `<p>Hello ${name},</p><p>Your account has been created.</p><p><b>Email:</b> ${user.email}<br/><b>Password:</b> ${password}</p><p>Please login and change your password.</p>`
   });
 
   res.status(201).json({

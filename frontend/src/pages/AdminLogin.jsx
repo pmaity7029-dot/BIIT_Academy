@@ -48,13 +48,14 @@ export default function AdminLogin() {
   return (
     <div className="login-page">
       {contextHolder}
-      <Card className="login-card" bordered={false}>
+      <Card className="login-card" variant="borderless">
         <div className="login-logo"><FiLock /></div>
         <Typography.Title level={2}>BIIT</Typography.Title>
         <Typography.Text type="secondary">Admin Panel — Secure Login</Typography.Text>
-        <Form form={form} layout="vertical" onFinish={onFinish} className="login-form" initialValues={{ email: 'admin@biit.in' }}>
+        
+        <Form form={form} layout="vertical" onFinish={onFinish} className="login-form">
           <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
-            <Input size="large" prefix={<FiMail />} placeholder="admin@biit.in" />
+            <Input size="large" prefix={<FiMail />} placeholder="Enter email address" />
           </Form.Item>
           <Form.Item name="password" label="Password" rules={[{ required: true }]}>
             <Input.Password size="large" prefix={<FiLock />} placeholder="Enter password" />

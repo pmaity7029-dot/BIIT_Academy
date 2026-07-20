@@ -20,11 +20,18 @@ import websiteRoutes from './routes/websiteRoutes.js';
 dotenv.config();
 
 const app = express();
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// Clean the frontend URL by removing any accidental trailing slashes from the .env file
+const rawFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const cleanFrontendUrl = rawFrontendUrl.replace(/\/$/, '');
 
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: [
+      cleanFrontendUrl,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ],
     credentials: true
   })
 );
