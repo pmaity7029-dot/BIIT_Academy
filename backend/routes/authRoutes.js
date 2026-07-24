@@ -85,7 +85,7 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
     html: `<p>Open this link to reset your BIIT admin password:</p><p><a href="${resetLink}">${resetLink}</a></p><p>This link expires in 30 minutes.</p>`
   });
 
-  res.json({ message: 'If the email exists, a reset link has been sent.', resetLink: process.env.NODE_ENV === 'production' ? undefined : resetLink });
+  res.json({ message: 'If the email exists, a reset link has been sent.' });
 }));
 
 router.post('/reset-password/:token', asyncHandler(async (req, res) => {
